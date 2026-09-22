@@ -4,9 +4,9 @@
 >
 > **归档说明**：这是**第三版**的只读快照。**最终版本是第四版（V04）**，在[仓库顶层](../README.md)，也已归档到 `Aurora-Waves-v4/`。原始数据不在这里重复存放，统一放在顶层 `data/`。
 
-![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](out/aurora-waves-v03-emerald-veil-in-motion.gif)
+![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](../out/aurora-waves-v03-emerald-veil-in-motion.gif)
 
-The image above is the first version that moves. It plays straight from this page — the file is in `out/`, so opening it shows the animation without running anything.
+The image above is the first version that moves. It plays straight from this page. The animation itself is kept once, at the [repository top level](../out/), so this folder carries the still rather than a second copy of a 5 MB file — two copies of a GIF are two files that can disagree.
 
 ## What V03 does
 
@@ -24,8 +24,8 @@ It stayed inside one day because its source, NOAA's live feed, serves only the l
 
 | File | What it is |
 |---|---|
-| `out/aurora-waves-v03-emerald-veil-in-motion.gif` | The animation: 96 frames, 9.6 seconds, about 5 MB. |
-| `out/aurora-waves-v03-poster.png` | The poster frame — the window at midday. |
+| `out/aurora-waves-v03-poster.png` | The poster frame — the window at midday. The only picture stored in this folder. |
+| `../out/aurora-waves-v03-emerald-veil-in-motion.gif` | The animation: 96 frames, 9.6 seconds, about 5 MB. Kept once, at the top level. |
 | `aurora_waves_v03.py` | The animation. It imports its drawing from `aurora_waves_v02.py` rather than copying it, so the still and the moving version cannot drift apart. |
 | `aurora_waves_v02.py`, `aurora_waves.py`, `aurora_data.py` | The drawing and loading code V03 depends on. |
 | `fetch.py`, `plot.py`, `test_data.py`, `test_v02.py` | The original fetcher and the checks, as they stood. |
