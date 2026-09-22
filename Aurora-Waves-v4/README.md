@@ -4,9 +4,9 @@
 >
 > **归档说明**：**这是最终版本（V04）**，也是本次提交的版本。使用中的副本在[仓库顶层](../README.md)，本文件夹是同一份内容的只读快照。原始数据不在这里重复存放，统一放在顶层 `data/`。
 
-![A week in the solar wind: 7–14 October 2024, the storm of 10 October, drawn through a sliding eight-hour window](../out/aurora-waves-v04-week-in-motion.gif)
+![A week in the solar wind: 7–14 October 2024, the storm of 10 October, drawn through a sliding eight-hour window](out/aurora-waves-v04-week-in-motion.gif)
 
-The image above is the final visualisation. It plays straight from this page. The animation itself is kept once, at the [repository top level](../out/), so this folder carries the still rather than a second copy of a 3.6 MB file. To see it full size rather than embedded here, open [`out/aurora-waves-v04-week-in-motion.gif`](../out/aurora-waves-v04-week-in-motion.gif) directly.
+The image above is the final visualisation, and it plays straight from this page — both the animation and the still sit inside this folder, so opening the folder is enough to see the submitted version. The identical file is also kept at the [repository top level](../out/), which is where the main README's links point; the two copies are made from the same run and kept byte-identical. To see it full size rather than embedded here, open [`out/aurora-waves-v04-week-in-motion.gif`](out/aurora-waves-v04-week-in-motion.gif) directly.
 
 ## What V04 does
 
@@ -28,8 +28,8 @@ So V04 averages each instrument over its own valid minutes within a shared five-
 
 | File | What it is |
 |---|---|
-| `out/aurora-waves-v04-poster.png` | The poster frame — the window holding the week's deepest Bz, 10 October 2024. The only picture stored in this folder. |
-| `../out/aurora-waves-v04-week-in-motion.gif` | The final animation: 161 frames, 17.7 seconds, about 3.6 MB. Kept once, at the top level. |
+| `out/aurora-waves-v04-poster.png` | The poster frame — the window holding the week's deepest Bz, 10 October 2024. |
+| `out/aurora-waves-v04-week-in-motion.gif` | The final animation: 161 frames, 17.7 seconds, about 3.6 MB. The same file is also at the top level. |
 | `aurora_waves_v04.py` | The final version. It imports its drawing from `aurora_waves_v02.py` rather than copying it, so the still and both animations share one implementation of the curtain. |
 | `fetch_omni.py` | Fetches the archive week once from NASA's CDAWeb HAPI interface and saves the reply unchanged. |
 | `aurora_waves_v02.py`, `aurora_waves_v03.py`, `aurora_waves.py`, `aurora_data.py` | The drawing and loading code V04 depends on. |
