@@ -1,8 +1,8 @@
 # Aurora Waves · V02 — Emerald Veil
 
-> **Archived — V02.** A read-only snapshot of the current version. The working copy is at the [repository top level](../README.md); the raw data is shared from `../data/` rather than duplicated here.
+> **Archived — V02.** A read-only snapshot of the second version. **The final version is V04**, kept at the [repository top level](../README.md) and archived in [`Aurora-Waves-v4/`](../Aurora-Waves-v4/). The raw data is not duplicated here — it lives once in `../data/`, so copy it in before re-running these scripts.
 >
-> **归档说明**：这是第二版的只读快照。当前使用中的副本在[仓库顶层](../README.md)，原始数据统一放在顶层 `data/`。
+> **归档说明**：这是**第二版**的只读快照。**最终版本是第四版（V04）**，在[仓库顶层](../README.md)，也已归档到 `Aurora-Waves-v4/`。原始数据不在这里重复存放，统一放在顶层 `data/`。
 
 ![Emerald Veil: a green auroral curtain with a purple lower hem above dark geomagnetic mountain ranges](out/aurora-waves-v02-emerald-veil.png)
 

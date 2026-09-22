@@ -1,37 +1,35 @@
 # Aurora Waves
 
+**The final version is V04.** It draws one week of measured solar wind — 7–14 October 2024, the week of the geomagnetic storm of 10 October — through a window eight hours wide that slides across it.
+
+- **[See it move →](out/aurora-waves-v04-week-in-motion.gif)** — the final visualisation. 161 frames, 17.7 seconds, loops. The link opens the file itself, so it plays full size.
+- **[See the still →](out/aurora-waves-v04-poster.png)** — the frame containing the week's deepest Bz.
+- **[Read the reasoning →](PROCESS.md)** — how each version was made, including one measurement that had to be corrected.
+
 ![Emerald Veil in motion, V04: a green auroral curtain through the geomagnetic storm of 10 October 2024, above dark mountain ranges built from 94 years of Kp](out/aurora-waves-v04-poster.png)
 
-The picture at the top is the current version, V04: one week of measured solar wind drawn through a moving window, the frame chosen where Bz — the north–south component of the interplanetary magnetic field — reached its deepest point of the week. Pale green carries the brightest light, jade sits in the shadows, and a small purple border runs beneath the curtain. NOAA describes pale green as the most common auroral colour and notes that some auroras have a purple lower edge [1]. That informed the palette. The colours here are a design choice, not a reconstruction of what an observer would have seen.
+The picture above is the final version, V04: one week of measured solar wind drawn through a moving window, the frame chosen where Bz — the north–south component of the interplanetary magnetic field — reached its deepest point of the week. Pale green carries the brightest light, jade sits in the shadows, and a small purple border runs beneath the curtain. NOAA describes pale green as the most common auroral colour and notes that some auroras have a purple lower edge [1]. That informed the palette. The colours here are a design choice, not a reconstruction of what an observer would have seen.
 
 The curtain uses solar-wind observations from NASA's OMNI archive, 7–14 October 2024 UTC [4] — the week of the geomagnetic storm of 10 October, when Kp reached 8.7 and Bz fell to −46 nT. The mountain ranges use 94 complete years of GFZ Kp data, 1932–2025 [3]. The sky and mountains have separate timelines: horizontal position in the sky is time within the week, while each mountain runs from the beginning to the end of its labelled years.
 
 ## Four versions in this repository
 
+Every version has its own folder holding that version's scripts, README and pictures as they stood. The raw data is kept once, in `data/`, and all four read it from there. Open a folder to read the code behind a version; open one of the pictures to see it full size without running anything.
+
+| Version | Its folder | Its picture | How it differs |
+|---|---|---|---|
+| **V04 — final** | [`Aurora-Waves-v4/`](Aurora-Waves-v4/) | [animation](out/aurora-waves-v04-week-in-motion.gif) · [still](out/aurora-waves-v04-poster.png) | A whole week, from the OMNI archive rather than the 24-hour live feed. The encodings are the same three as V02 with re-scaled rulers, plus a strip that shows all seven days at once with the moving window marked on it. |
+| **V03** | [`Aurora-Waves-v3/`](Aurora-Waves-v3/) | [animation](out/aurora-waves-v03-emerald-veil-in-motion.gif) · [still](out/aurora-waves-v03-poster.png) | The same day as V02, drawn through a window eight hours wide that slides across it: the curtain flows, the mountains hold still. |
+| **V02** | [`Aurora-Waves-v2/`](Aurora-Waves-v2/) | [still](out/aurora-waves-v02-emerald-veil.png) | Emerald Veil. Bz moves to the position of the curtain's lower edge, the bars become a fading light field softened only inside valid runs, and the palette follows the auroral colours NOAA describes. |
+| **V01** | [`Aurora-Waves-v1/`](Aurora-Waves-v1/) | [still](out/aurora-waves.png) · [first look](out/aurora-first-look.png) | Jade-green ranges under a cyan-to-violet curtain. Bz is encoded as the curtain's thread hue, and the strands are hard vertical bars. |
+
 ![Aurora Waves V01: cyan and violet mountains beneath a curtain of solar-wind measurements](out/aurora-waves.png)
 
-The picture above the line is V01. V02 gives the same day a quieter palette, V03 sets that day in motion, and V04 widens the clock to a week. V01 and V02 each keep a read-only archive folder holding that version's scripts, README and picture as they stood; V03 and V04 live at the top level. The raw data is kept once, in `data/`, and every version reads it from there.
+*V01, the first version — where the four started.*
 
-| Version | Where it lives | How it differs |
-|---|---|---|
-| **V01** | [`Aurora-Waves-v1/`](Aurora-Waves-v1/) | Jade-green ranges under a cyan-to-violet curtain. Bz is encoded as the curtain's thread hue, and the strands are hard vertical bars. |
-| **V02** | [`Aurora-Waves-v2/`](Aurora-Waves-v2/) | Emerald Veil. Bz moves to the position of the curtain's lower edge, the bars become a fading light field softened only inside valid runs, and the palette follows the auroral colours NOAA describes. |
-| **V03** | the top level of this repository | The same day as V02, drawn through a window eight hours wide that slides across it: the curtain flows, the mountains hold still. |
-| **V04** | the top level of this repository | A whole week, from the OMNI archive rather than the 24-hour live feed. The encodings are the same three as V02 with re-scaled rulers, plus a strip that shows all seven days at once with the moving window marked on it. |
+## V04 — a week in the solar wind *(the final version)*
 
-## V03 — the curtain in motion
-
-![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](out/aurora-waves-v03-emerald-veil-in-motion.gif)
-
-*The loop covers the whole day in 9.6 seconds, one frame every ten minutes of the record.*
-
-![Emerald Veil in motion, poster frame: the window at midday](out/aurora-waves-v03-poster.png)
-
-V03 draws the same measurements as V02, but through a window instead of the whole day at once. The smoothing is computed once over the full record, so what a given minute looks like never depends on which frame happens to be on screen. The fine filament texture is tied to the data's own clock, so it travels with the curtain rather than shimmering underneath it, and the bright segment under the time axis shows where the visible window sits inside the day. The mountain ranges do not move: the 94-year Kp record has no clock. The GIF carries one shared 128-colour palette built from frames sampled across the loop, so the colours cannot flicker between frames.
-
-V03 stayed inside one day because its source, NOAA's live feed, serves only the last 24 hours. The first attempt at a week from the OMNI archive looked hopeless and was dropped; V04 went back and measured it properly. That story is below.
-
-## V04 — a week in the solar wind
+Files and a copy of this write-up: [`Aurora-Waves-v4/`](Aurora-Waves-v4/).
 
 ![A week in the solar wind: 7–14 October 2024, the storm of 10 October, drawn through a sliding eight-hour window](out/aurora-waves-v04-week-in-motion.gif)
 
@@ -52,6 +50,20 @@ NOAA's free one-minute solar-wind feed only holds the last 24 hours, and the rol
 The first measurement of this archive was pessimistic and wrong. Counting only minutes where *all five quantities* are valid *in the same minute*, the archive looked 18–36 per cent empty. But the two instruments do not drop out together: over this week the magnetometer reports 95.8 per cent of minutes and the plasma instrument 79.6, and their gaps rarely overlap for long. Demanding they agree to the minute discards a fifth of the week for no physical reason — at most five minutes of alignment sits inside one clock bin. So V04 averages each instrument over its own valid minutes within a shared five-minute bin, and a bin exists when both are present. Under that rule 1,921 of 2,016 bins are usable: 95.3 per cent of the week.
 
 What remains missing is kept missing. Ninety-five bins are empty — 41 single-bin holes, seven gaps of five to fifteen minutes, and one gap of about three hours and twenty minutes on 13 October. The curtain's glow fades softly into each gap rather than stopping dead, but the edge line still breaks and the light points still stop: the hole is there to be seen. Nothing is interpolated across a gap, in the sky or in the strip.
+
+## V03 — the curtain in motion
+
+Files and a copy of this write-up: [`Aurora-Waves-v3/`](Aurora-Waves-v3/).
+
+![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](out/aurora-waves-v03-emerald-veil-in-motion.gif)
+
+*The loop covers the whole day in 9.6 seconds, one frame every ten minutes of the record.*
+
+![Emerald Veil in motion, poster frame: the window at midday](out/aurora-waves-v03-poster.png)
+
+V03 draws the same measurements as V02, but through a window instead of the whole day at once. The smoothing is computed once over the full record, so what a given minute looks like never depends on which frame happens to be on screen. The fine filament texture is tied to the data's own clock, so it travels with the curtain rather than shimmering underneath it, and the bright segment under the time axis shows where the visible window sits inside the day. The mountain ranges do not move: the 94-year Kp record has no clock. The GIF carries one shared 128-colour palette built from frames sampled across the loop, so the colours cannot flicker between frames.
+
+V03 stayed inside one day because its source, NOAA's live feed, serves only the last 24 hours. The first attempt at a week from the OMNI archive looked hopeless and was dropped; V04 went back and measured it properly. That story is above.
 
 ## What the six measurements do
 
@@ -154,7 +166,9 @@ V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and bot
 
 这是单独保存的第二版：`aurora_waves_v02.py` 对应 `aurora-waves-v02-emerald-veil.png`，不会覆盖第一版。新版保留六项数据，把极光绿作为主色，辅以青绿、少量紫色下缘和红色辉光。Bz 改为控制光幕下缘的位置，让主体颜色更接近极光观感。光幕经过 45 分钟柔化，但缺测位置仍留空；光点面积和颜色保留五分钟数据的变化。这里呈现的是数据艺术，不是实拍照片或极光可见性预测。
 
-仓库里四个版本：`Aurora-Waves-v1/` 和 `Aurora-Waves-v2/` 各自是第一、二版的只读归档，第三、四版在顶层。原始数据只保存一份，放在顶层 `data/`，所有版本共用。
+四个版本各有一个归档文件夹：`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`，里面分别放着那一版的脚本、说明和成品图。**最终版本是第四版（V04）**，使用中的副本在顶层（也就是本页），同一份内容也已归档到 `Aurora-Waves-v4/`。原始数据只保存一份，放在顶层 `data/`，四个版本共用。
+
+想直接看可视化，不用跑任何代码：点开 `out/aurora-waves-v04-week-in-motion.gif` 就是最终版的动画（GitHub 上会直接播放），点开 `out/aurora-waves-v04-poster.png` 是最终版的静帧；其余三版的成品图同样可以直接点开查看（见上文表格里的链接）。
 
 第三版 `aurora_waves_v03.py` 在第二版的基础上加了帧动画：把一天 24 小时的太阳风通过一个 8 小时宽的滑动窗口呈现，让绿色光幕流动起来，山峦保持静止（94 年的 Kp 记录本身没有时间轴）。整个循环 9.6 秒、96 帧、约 5 MB，全部帧共用同一套 128 色调色板，避免颜色闪烁；时间轴下方那条亮绿色的短线，标出当前窗口在一天中的位置。
 

@@ -1,8 +1,8 @@
-# Aurora Waves
+# Aurora Waves · V01 — Cyan and Violet
 
-> **Archived — V01.** A read-only snapshot of the first version: jade-green ranges under a cyan-to-violet curtain, Bz encoded as the curtain's thread hue. The current version is V02 (Emerald Veil), documented in the [repository README](../README.md) and archived in [`Aurora-Waves-v2/`](../Aurora-Waves-v2/). The raw data is not duplicated here — it lives once in `../data/`, so copy it in before re-running these scripts.
+> **Archived — V01.** A read-only snapshot of the first version: jade-green ranges under a cyan-to-violet curtain, Bz encoded as the curtain's thread hue. **The final version is V04**, documented in the [repository README](../README.md) and archived in [`Aurora-Waves-v4/`](../Aurora-Waves-v4/). The raw data is not duplicated here — it lives once in `../data/`, so copy it in before re-running these scripts.
 >
-> **归档说明**：这是第一版的只读快照（青绿山峦 + 青紫色光幕，Bz 用光幕丝的色相表达）。当前版本是第二版 Emerald Veil，见[仓库顶层说明](../README.md)。原始数据不在这里重复存放，统一放在顶层 `data/`。
+> **归档说明**：这是**第一版**的只读快照（青绿山峦 + 青紫色光幕，Bz 用光幕丝的色相表达）。**最终版本是第四版（V04）**，见[仓库顶层说明](../README.md)。原始数据不在这里重复存放，统一放在顶层 `data/`。
 
 ![Aurora Waves: cyan and violet mountains beneath a curtain of solar-wind measurements](out/aurora-waves.png)
 
