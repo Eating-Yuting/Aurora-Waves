@@ -2,82 +2,89 @@
 # requires-python = ">=3.10"
 # dependencies = []
 # ///
-
-"""
-Look at the numbers before drawing them. Print what each file in data/
-actually contains: how many records, which fields, what the first and
-last rows look like, and the range of the interesting columns.
-
-    uv run aurora_data.py
-"""
-
+"""Inspect the untouched GFZ / NOAA replies; share the parsing rules with plots."""
 import json
+import math
+from collections import defaultdict
+from datetime import date, datetime, timezone
 from pathlib import Path
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).resolve().parent / "data"
 
 
-def hr(title):
-    print()
-    print("=" * 72)
-    print(title)
-    print("=" * 72)
+def utc(text):
+    dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
 
-def show(name, rows, fields, time_key="time_tag"):
-    """Print span, fields, and value ranges for a list of dicts."""
-    span = f"{rows[0][time_key]}  ->  {rows[-1][time_key]}"
-    print(f"\n{name}: {len(rows):,} records, {span}")
-    for label, key, unit in fields:
-        values = [r[key] for r in rows if isinstance(r.get(key), (int, float))]
-        if values:
-            print(f"  {label:<28} {key:<18} min {min(values):>10.2f}   "
-                  f"max {max(values):>10.2f}   ({unit})")
-        else:
-            print(f"  {label:<28} {key:<18} (no numeric values)")
+def read_swpc(filename, fields):
+    """Sort UTC, select active spacecraft, skip flagged / incomplete rows.
+
+    Do not combine several spacecraft at the same minute. Missing records
+    stay absent; plotting code must decide explicitly how to show gaps.
+    """
+    raw = json.loads((DATA / filename).read_text())
+    rows = {}
+    for r in raw:
+        if not r.get("active", True) or r.get("overall_quality", 0) != 0:
+            continue
+        values = [r.get(k) for k in fields]
+        if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in values):
+            continue
+        if any(v < 0 for k, v in zip(fields, values) if k != "bz_gsm"):
+            continue
+        if "estimated_kp" in fields and r["estimated_kp"] > 9:
+            continue
+        if "bz_gsm" in fields and "bt" in fields and abs(r["bz_gsm"]) > r["bt"] + 0.02:
+            continue
+        t = utc(r["time_tag"])
+        if t in rows:
+            raise ValueError(f"Multiple active records at {t}: {filename}")
+        rows[t] = tuple(float(v) for v in values)
+    if not rows:
+        raise ValueError(f"No valid active observations in {filename}")
+    return dict(sorted(rows.items()))
+
+
+def read_gfz():
+    """Kp is the EIGHTH column (index 7). Keep real dates and valid 0..9 Kp."""
+    days = defaultdict(list)
+    raw_count = 0
+    for line in (DATA / "gfz-kp-ap-since-1932.txt").read_text().splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        r = line.split()
+        raw_count += 1
+        kp = float(r[7])
+        if 0 <= kp <= 9:
+            days[date(*map(int, r[:3]))].append(kp)
+    # Require eight intervals so an incomplete day cannot look artificially quiet.
+    daily = {d: max(v) for d, v in sorted(days.items()) if len(v) == 8}
+    if not daily:
+        raise ValueError("GFZ file contains no complete days")
+    return raw_count, daily
 
 
 def main():
-    hr("swpc-planetary-k-index-1m.json  (NOAA SWPC, Kp every minute)")
-    kp = json.loads((DATA / "swpc-planetary-k-index-1m.json").read_text())
-    print(f"first row: {kp[0]}")
-    show("kp", kp, [("Kp index (0-9)", "kp_index", "unitless"),
-                    ("estimated Kp", "estimated_kp", "unitless")])
-
-    hr("swpc-solar-wind-mag-1m.json  (NOAA SWPC, magnetic field)")
-    mag = json.loads((DATA / "swpc-solar-wind-mag-1m.json").read_text())
-    show("mag", mag, [("total field", "bt", "nT"),
-                      ("north-south", "bz_gsm", "nT"),
-                      ("east-west", "by_gsm", "nT")])
-
-    hr("swpc-solar-wind-plasma-1m.json  (NOAA SWPC, solar wind)")
-    wind = json.loads((DATA / "swpc-solar-wind-plasma-1m.json").read_text())
-    show("plasma", wind, [("proton speed", "proton_speed", "km/s"),
-                          ("proton density", "proton_density", "1/cm3"),
-                          ("temperature", "proton_temperature", "K")])
-
-    hr("swpc-ovation-aurora-latest.json  (NOAA SWPC, aurora probability)")
+    for filename, fields in [
+        ("swpc-solar-wind-plasma-1m.json", ("proton_speed", "proton_density", "proton_temperature")),
+        ("swpc-solar-wind-mag-1m.json", ("bt", "bz_gsm")),
+        ("swpc-planetary-k-index-1m.json", ("estimated_kp",)),
+    ]:
+        raw = json.loads((DATA / filename).read_text())
+        rows = read_swpc(filename, fields)
+        print(f"{filename}: {len(raw):,} raw / {len(rows):,} selected complete rows")
+        print(f"  {min(rows).isoformat()} -> {max(rows).isoformat()}")
+        for j, field in enumerate(fields):
+            v = [r[j] for r in rows.values()]
+            print(f"  {field}: {min(v):g} .. {max(v):g}")
+    raw_count, daily = read_gfz()
+    print(f"GFZ: {raw_count:,} raw 3-hour records / {len(daily):,} complete days")
+    print(f"  {min(daily)} -> {max(daily)}; Kp range {min(daily.values())} .. {max(daily.values())}")
     ov = json.loads((DATA / "swpc-ovation-aurora-latest.json").read_text())
-    coords = ov["coordinates"]
-    probs = [c[1] for c in coords]
-    print(f"\nObservation Time: {ov['Observation Time']}")
-    print(f"Forecast   Time: {ov['Forecast Time']}")
-    print(f"grid: {len(coords):,} points  (lon, aurora probability 0-100)")
-    print(f"  aurora probability          min {min(probs):>10.2f}   "
-          f"max {max(probs):>10.2f}   (percent)")
-
-    hr("gfz-kp-ap-since-1932.txt  (GFZ, Kp every 3 hours since 1932)")
-    lines = [l for l in (DATA / "gfz-kp-ap-since-1932.txt").read_text().splitlines()
-             if l and not l.startswith("#")]
-    first, last = lines[0].split(), lines[-1].split()
-    # columns: YYYY MM DD hh.h hh._m days days_m Kp ap D  ->  Kp is index 7
-    kps = [float(l.split()[7]) for l in lines]
-    print(f"\ngfz: {len(lines):,} records,  {first[0]}-{first[1]}-{first[2]}  ->  "
-          f"{last[0]}-{last[1]}-{last[2]}")
-    print("  columns: YYYY MM DD hh.h hh._m days days_m Kp ap D")
-    print(f"  Kp (0-9, 3-hourly)          min {min(kps):>10.2f}   "
-          f"max {max(kps):>10.2f}   (unitless)")
-    print("\nDone. Now we know what every number means - time to draw.")
+    vals = [c[2] for c in ov["coordinates"]]
+    print(f"OVATION (exploration only): {len(vals):,} [longitude, latitude, aurora] grid points")
+    print(f"  third-field range {min(vals)} .. {max(vals)}; forecast {ov['Forecast Time']}")
 
 
 if __name__ == "__main__":
