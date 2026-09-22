@@ -2,69 +2,56 @@
 # requires-python = ">=3.10"
 # dependencies = ["matplotlib"]
 # ///
-
-"""
-Read the files in data/, make one plain picture, save it to out/.
+"""The plain first-look chart, with the same corrected parsing as the artwork.
 
     uv run plot.py
-
-This is the ugly first version, on purpose: does the pipeline work, and what
-do yesterday's numbers actually look like? Two panels, one day, minute by
-minute - Kp on top (how strong the disturbance was), Bz below (which way the
-solar wind's magnetic field pointed). The beautiful version comes later.
+    uv run plot.py --no-show
 """
-
-import json
-from datetime import datetime
+import argparse
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import matplotlib
+from aurora_data import read_swpc
 
-import matplotlib.pyplot as plt
 
-HERE = Path(__file__).parent
-DATA = HERE / "data"
-OUT = HERE / "out"
-
-PICTURE = "aurora-first-look.png"
+def series(rows):
+    """Insert breaks rather than drawing a line through missing minutes."""
+    xs, ys = [], []
+    previous = None
+    for t, (v,) in rows.items():
+        if previous and t - previous > timedelta(minutes=1):
+            xs.append(previous + timedelta(seconds=30)); ys.append(float("nan"))
+        xs.append(t); ys.append(v); previous = t
+    return xs, ys
 
 
 def main():
-    kp = json.loads((DATA / "swpc-planetary-k-index-1m.json").read_text())
-    mag = json.loads((DATA / "swpc-solar-wind-mag-1m.json").read_text())
-
-    def series(rows, key):
-        """time_tag text -> datetime, keep only rows where the key is numeric."""
-        xs, ys = [], []
-        for row in rows:
-            value = row.get(key)
-            if isinstance(value, (int, float)):
-                xs.append(datetime.fromisoformat(row["time_tag"]))
-                ys.append(value)
-        return xs, ys
-
-    print(f"kp: {len(kp)} rows, mag: {len(mag)} rows")
-
-    kp_x, kp_y = series(kp, "estimated_kp")
-    bz_x, bz_y = series(mag, "bz_gsm")
-    print(f"Kp from {min(kp_y)} to {max(kp_y)}, Bz from {min(bz_y)} to {max(bz_y)} nT")
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
-
-    ax1.plot(kp_x, kp_y, color="#1f77b4")
-    ax1.set_ylabel("estimated Kp")
-    ax1.set_title("Aurora first look - last 24 hours, one minute per point")
-    ax1.grid(True, alpha=0.3)
-
-    ax2.plot(bz_x, bz_y, color="#d62728")
-    ax2.set_ylabel("Bz, nT")
-    ax2.set_xlabel("time (UTC)")
-    ax2.axhline(0, color="black", linewidth=0.8)
-    ax2.grid(True, alpha=0.3)
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--no-show", action="store_true")
+    no_show = parser.parse_args().no_show
+    if no_show:
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    kp = read_swpc("swpc-planetary-k-index-1m.json", ("estimated_kp",))
+    # Include Bt in validation to reject impossible |Bz| > Bt.
+    mag = read_swpc("swpc-solar-wind-mag-1m.json", ("bt", "bz_gsm"))
+    bz = {t: (v[1],) for t,v in mag.items()}
+    fig, axes = plt.subplots(2,1,figsize=(11,6),sharex=True)
+    for ax, rows, name, color in zip(axes, [kp,bz], ["estimated Kp (unitless)","Bz GSM (nT)"], ["#6457aa","#1b9a94"]):
+        ax.plot(*series(rows),color=color,lw=1)
+        ax.set_ylabel(name); ax.grid(alpha=.2)
+    axes[1].axhline(0,color="gray",lw=.5)
+    axes[1].xaxis.set_major_formatter(mdates.DateFormatter("%d %b\n%H:%M",tz=timezone.utc))
+    axes[1].set_xlabel("Time (UTC) · active spacecraft · gaps left empty")
+    axes[0].set_title("Aurora first look · cached NOAA observations")
     fig.tight_layout()
-    OUT.mkdir(exist_ok=True)
-    fig.savefig(OUT / PICTURE, dpi=150)
-    print(f"saved out/{PICTURE}")
-    plt.show()
+    out = Path(__file__).resolve().parent / "out"
+    out.mkdir(exist_ok=True)
+    fig.savefig(out/"aurora-first-look.png",dpi=150)
+    print("saved out/aurora-first-look.png")
+    if not no_show: plt.show()
+    plt.close(fig)
 
 
 if __name__ == "__main__":

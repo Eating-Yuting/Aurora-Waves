@@ -2,286 +2,225 @@
 # requires-python = ">=3.10"
 # dependencies = ["matplotlib", "numpy"]
 # ///
+"""Six measured variables as a landscape. Offline, deterministic, no synthetic data.
 
+    uv run aurora_waves.py             # save PNG and open a window
+    uv run aurora_waves.py --no-show   # save only, including on GitHub
+
+Edit the palette / figure constants below to change the design.
 """
-Aurora Waves - the picture.
-
-Two data sets, one landscape:
-
-  * Ninety-four years of geomagnetic activity (Kp, 1932-2025, GFZ) become
-    mountain ranges in the blue-green mineral pigments of Chinese
-    landscape painting. One range per decade: its silhouette is the daily
-    maximum Kp of those years, so every decade grows exactly one grand
-    summit - the solar maximum that lived inside it. Old ranges recede
-    into dark azurite mist, the 2020s stand close in bright malachite.
-
-  * The solar wind of the last ~56 hours (NOAA SWPC, one minute per
-    point) becomes threads of light rising out of the range: the faster
-    the wind, the longer the thread; a southward-pointing magnetic field
-    makes it glow.
-
-A gold dot marks the strongest storm in the whole record.
-
-    uv run aurora_waves.py   ->   out/aurora-waves.png
-"""
-
-import json
-from datetime import date, datetime, timedelta
+import argparse
+from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, to_rgb
+from aurora_data import read_gfz, read_swpc
 
-ROOT = Path(__file__).parent
-DATA = ROOT / "data"
+ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "out"
-if not OUT.exists():
-    OUT.mkdir()
-
-# ---------------------------------------------------------------- palette
-# 墨 ink -> 石青 azurite -> 石绿 malachite: far ranges are dark and blue,
-# near ranges bright and green.
-RIDGE_CMAP = LinearSegmentedColormap.from_list(
-    "qinglv",
-    ["#06141C", "#0B2530", "#123B44", "#1B565B",
-     "#2A7268", "#3B8F74", "#4FA97D", "#63BD87"],
-)
-SKY_TOP = "#030C14"
-SKY_HORIZON = "#16404F"
-THREAD_CMAP = LinearSegmentedColormap.from_list(
-    "threads", ["#1B4E5E", "#2E7F7A", "#63B79B", "#A8E6CB", "#E4FBF0"]
-)
-TEXT = "#AEDCC9"
-GOLD = "#D4AF4E"
-
-GAP = 0.66      # horizon line: ranges stack below, light rises above
+BG, INK, MUTED = "#060b25", "#e8f4ee", "#97a8bd"
+CYAN, LIME, PURPLE = "#26ead8", "#e4ff69", "#a17aff"
+BINS_MINUTES, MIN_SAMPLES, SMOOTH_DAYS = 5, 3, 45
+BZ_MAP = LinearSegmentedColormap.from_list("bz", [CYAN, "#83bdf4", PURPLE])
+TEMP_MAP = LinearSegmentedColormap.from_list("temp", ["#4bdbea", LIME])
+RIDGE_MAP = LinearSegmentedColormap.from_list("ridges", ["#073e52", "#087985", "#193a79", "#342a7a"])
 
 
-# ------------------------------------------------------------------ data
-def load_yearly_kp():
-    """One silhouette per year (daily maximum Kp), plus the worst storm."""
-    rows = [l.split() for l in (DATA / "gfz-kp-ap-since-1932.txt")
-            .read_text().splitlines() if l.strip() and not l.startswith("#")]
-    # YYYY MM DD hh.h hh._m days days_m Kp ap D
-    year = np.array([int(r[0]) for r in rows])
-    yday = np.array([date(int(r[0]), int(r[1]), int(r[2])).timetuple().tm_yday
-                     for r in rows])
-    kp = np.array([float(r[7]) for r in rows])          # 0-9, thirds
-
-    key = year * 1000 + yday
-    uniq, inv = np.unique(key, return_inverse=True)
-    daily = np.zeros(uniq.shape)
-    np.maximum.at(daily, inv, kp)                       # 8 samples -> 1 day
-
-    uy, ud = uniq // 1000, uniq % 1000
-    grid = np.arange(1, 367)
-    years, profiles = [], []
-    for y in np.unique(uy):
-        m = uy == y
-        if m.sum() < 340:                               # drop partial years
-            continue
-        profiles.append(np.interp(grid, ud[m], daily[m],
-                                  left=daily[m][0], right=daily[m][-1]))
-        years.append(y)
-
-    worst = int(np.argmax(daily))
-    wy, wd = int(uy[worst]), int(ud[worst])
-    storm = {"date": date(wy, 1, 1) + timedelta(days=wd - 1),
-             "kp": float(daily[worst])}
-    return np.array(years), np.array(profiles), storm
+def load_landscape():
+    """Complete calendar years only; no fake 366th day in non-leap years."""
+    raw_count, daily = read_gfz()
+    latest_year = max(daily).year
+    years = []
+    for y in range(min(daily).year, latest_year + 1):
+        expected = (date(y + 1, 1, 1) - date(y, 1, 1)).days
+        if sum(d.year == y for d in daily) == expected:
+            years.append(y)
+    allowed = set(years)
+    grouped = defaultdict(list)
+    for d, kp in daily.items():
+        if d.year in allowed:
+            grouped[d.year // 10 * 10].append((d, kp))
+    if not grouped:
+        raise ValueError("No complete calendar years in GFZ data")
+    return raw_count, years, list(grouped.values())
 
 
-def load_series(filename, key):
-    """Read a NOAA SWPC json list and return (epoch seconds, values).
+def load_wind():
+    """Join valid active plasma and magnetic observations at EXACT UTC minutes.
 
-    SWPC serves the newest minute first, so put the series back in
-    chronological order before anything is drawn from it.
+    Five-minute means require >=3 paired minutes. Empty bins remain NaN;
+    no interpolation over telemetry gaps and no endpoint extrapolation.
     """
-    rows = json.loads((DATA / filename).read_text())
-    t, v = [], []
-    for r in rows:
-        val = r.get(key)
-        if isinstance(val, (int, float)):
-            t.append(datetime.fromisoformat(r["time_tag"]).timestamp())
-            v.append(float(val))
-    t, v = np.array(t), np.array(v)
-    order = np.argsort(t)
-    return t[order], v[order]
+    plasma = read_swpc("swpc-solar-wind-plasma-1m.json", ("proton_speed", "proton_density", "proton_temperature"))
+    mag = read_swpc("swpc-solar-wind-mag-1m.json", ("bt", "bz_gsm"))
+    times = sorted(plasma.keys() & mag.keys())
+    if len(times) < MIN_SAMPLES:
+        raise ValueError("Not enough matching active plasma / magnetic minutes")
+    seconds = BINS_MINUTES * 60
+    bucket = defaultdict(list)
+    for t in times:
+        bucket[int(t.timestamp()) // seconds].append(plasma[t] + mag[t])
+    keys = np.arange(min(bucket), max(bucket) + 1)
+    values = np.full((len(keys), 5), np.nan)
+    for i, k in enumerate(keys):
+        if len(bucket[k]) >= MIN_SAMPLES:
+            values[i] = np.mean(bucket[k], axis=0)
+    if not np.isfinite(values).any():
+        raise ValueError("No five-minute bin has enough matching observations")
+    return (keys + .5) * seconds, values, len(times)
 
 
-def decade_ranges(years, profiles):
-    """Group the years into decades; each decade becomes one range."""
-    ranges, cy, cp = [], [], []
-    for y, p in zip(years, profiles):
-        if cy and int(y) % 10 == 0:
-            ranges.append((cy, np.concatenate(cp)))
-            cy, cp = [], []
-        cy.append(int(y))
-        cp.append(p)
-    if cy:
-        ranges.append((cy, np.concatenate(cp)))
-    return ranges
+def scaled(values, low, high):
+    return np.clip((values - low) / (high - low), 0, 1)
 
 
-# ------------------------------------------------------------- the ranges
-def draw_ridges(ax, ranges, storm):
-    n = len(ranges)
-    x = np.linspace(0, 1, 1200)
-    base = np.linspace(0.60, 0.05, n)       # oldest far away, newest up front
-    marked = False
-
-    for i, (yrs, prof) in enumerate(ranges):
-        d = i / (n - 1)                     # 0 = farthest, 1 = nearest
-        amp = 0.12 + 0.18 * d               # perspective: near peaks taller
-        kernel = np.ones(45) / 45           # storm-days -> rolling hills
-        padded = np.pad(prof, 22, mode="edge")
-        smooth = np.convolve(padded, kernel, mode="valid")[: prof.size]
-        crest = np.interp(x, np.linspace(0, 1, smooth.size), smooth) / 9.0
-        y = base[i] + amp * crest
-        colour = RIDGE_CMAP(d)
-
-        ax.fill_between(x, -0.05, y, color=colour, lw=0,
-                        zorder=10 + i)
-        pale = tuple(0.5 * np.array(colour[:3]) + 0.5 * np.array([0.85, 0.97, 0.90]))
-        ax.plot(x, y, color=pale, lw=0.5, alpha=0.4, zorder=10 + i)
-        ax.text(0.013, base[i] + 0.015, f"{yrs[0]}-{str(yrs[-1])[2:]}",
-                color=pale, fontsize=5.5, alpha=0.85, ha="left", zorder=300)
-
-        # the strongest storm of the record, if it lives in this range
-        if not marked and yrs[0] <= storm["date"].year <= yrs[-1]:
-            idx = ((storm["date"].year - yrs[0]) * 366
-                   + storm["date"].timetuple().tm_yday - 1)
-            idx = min(idx, prof.size - 1)
-            sx = idx / (prof.size - 1)
-            sy = base[i] + amp * np.interp(sx, np.linspace(0, 1, smooth.size),
-                                           smooth) / 9.0
-            ax.scatter([sx], [sy + 0.006], s=16, color=GOLD, zorder=300)
-            ax.plot([sx, sx + 0.025], [sy + 0.010, 0.845], color=GOLD, lw=0.6,
-                    alpha=0.8, zorder=300)
-            ha = "left" if sx < 0.55 else "right"
-            tx = sx + 0.030 if ha == "left" else sx - 0.030
-            ax.text(tx, 0.835,
-                    f"{storm['date']:%d %b %Y}  ·  Kp {storm['kp']:.1f}\n"
-                    "the strongest storm in the record",
-                    color=GOLD, fontsize=6.2, alpha=0.9, ha=ha, va="top",
-                    zorder=300, linespacing=1.5)
-            marked = True
+def glow_line(ax, x, y, color, width=.6, z=5):
+    for w, a in [(width * 10, .025), (width * 4, .08), (width, .8)]:
+        ax.plot(x, y, color=color, lw=w, alpha=a, zorder=z)
 
 
-# ------------------------------------------------------- the light curtain
-def draw_aurora(ax):
-    """The solar wind of the last ~56 hours as a curtain of light.
-
-    Brightness follows a mix of wind speed and southward Bz; the glow
-    fades exponentially with height and is broken into vertical rays.
-    """
-    tp, speed = load_series("swpc-solar-wind-plasma-1m.json", "proton_speed")
-    tz, bz = load_series("swpc-solar-wind-mag-1m.json", "bz_gsm")
-
-    t0, t1 = tp.min(), tp.max()
-    grid = np.linspace(t0, t1, 1400)
-    sp = np.interp(grid, tp, speed)
-    bz_g = np.interp(grid, tz, bz)
-
-    x = (grid - t0) / (t1 - t0)
-    lo, hi = np.percentile(sp, 2), np.percentile(sp, 98)
-    s = np.clip((sp - lo) / max(hi - lo, 1e-6), 0, 1)
-    south = np.clip(-bz_g / 6.0, 0, 1)                  # southward = aurora
-    env = np.convolve(0.45 * s + 0.55 * south, np.ones(41) / 41, mode="same")
-    env = np.clip(env, 0, 1)
-
-    # irregular vertical striations, like the rays of a real curtain
-    rng = np.random.default_rng(7)
-    noise = rng.random(x.size)
-    kern = np.hanning(31)
-    kern /= kern.sum()
-    stria = np.convolve(np.pad(noise, 15, mode="edge"), kern, mode="valid")
-    stria = 0.55 + 0.45 * (stria - stria.min()) / np.ptp(stria)
-
-    h = np.linspace(0, 1, 260)[:, None]                 # 0 = horizon, 1 = top
-    glow = env[None, :] ** 1.35 * np.exp(-h / 0.13) * stria[None, :]
-    t = np.clip(glow * 1.7, 0, 1)
-    low = np.array([0.10, 0.31, 0.37])                  # deep teal
-    high = np.array([0.89, 0.98, 0.94])                 # pale jade-white
-    col = low * (1 - t[..., None]) + high * t[..., None]
-    rgba = np.concatenate([col, np.clip(glow, 0, 1)[..., None]], axis=-1)
-    ax.imshow(rgba, extent=[0, 1, GAP - 0.01, 1], origin="lower",
-              aspect="auto", zorder=3)
-
-    # a few silk strands drifting through the glow, scattered like the
-    # curtain's rays, not in an even row
-    picks = rng.choice(x.size, size=110, replace=False)
-    for xi, si in sorted(zip(x[picks], env[picks])):
-        rise = 0.03 + 0.16 * si
-        tt = np.linspace(0, 1, 24)
-        bow = 0.008 * np.sin(np.pi * tt) * (si - 0.5)
-        pts = np.column_stack([xi + bow, GAP - 0.01 + rise * tt])
-        ax.add_collection(LineCollection(
-            [pts], colors=[THREAD_CMAP(min(1.0, 0.35 + 0.65 * si))],
-            linewidths=0.5, alpha=0.32, zorder=4))
+def draw_curtain(ax, times, values):
+    x = .06 + .88 * (times - times[0]) / (times[-1] - times[0])
+    speed, density, temp, bt, bz = values.T
+    height = .06 + .20 * scaled(speed, 300, 380)
+    colors = BZ_MAP(scaled(bz, -5, 5))
+    colors[:, 3] = .2 + .8 * scaled(bt, 0, 6)
+    floor = .645
+    # Every strand = one observed five-minute bin. Same time on all sky layers.
+    valid = np.isfinite(values).all(axis=1)
+    segments = [np.array([[xi, floor], [xi, floor + hi]]) for xi, hi in zip(x[valid], height[valid])]
+    for lw, fade in [(12, .035), (5, .10), (1.3, .65), (.4, 1)]:
+        c = colors[valid].copy()
+        c[:, 3] *= fade
+        ax.add_collection(LineCollection(segments, colors=c, linewidths=lw, zorder=3))
+    top = np.where(valid, floor + height, np.nan)
+    glow_line(ax, x, top, CYAN, .65)
+    # A point sits just above each thread. Its AREA is linear in density;
+    # its hue follows proton temperature. Point count does not encode density.
+    point_y = top + .018
+    point_colors = TEMP_MAP(scaled(temp, 20000, 100000))
+    areas = 2 + 12 * np.clip(density, 0, 5)
+    ax.scatter(x[valid], point_y[valid], s=areas[valid] * 4, c=point_colors[valid], alpha=.05, lw=0, zorder=7)
+    ax.scatter(x[valid], point_y[valid], s=areas[valid], c=point_colors[valid], alpha=.8, lw=0, zorder=8)
+    ax.plot([.06, .94], [.632, .632], color=MUTED, lw=.5, alpha=.4)
+    for f in np.linspace(0, 1, 5):
+        t = datetime.fromtimestamp(times[0] + f * (times[-1] - times[0]), timezone.utc)
+        xx = .06 + .88 * f
+        ax.text(xx, .618, t.strftime("%d %b · %H:%M"), ha="center", color=MUTED, fontsize=7)
+    ax.text(.06, .864, "01 / SOLAR WIND", color=CYAN, fontsize=8, weight="bold")
+    ax.text(.94, .864, "UTC  /  FIVE-MINUTE MEANS  /  GAPS LEFT EMPTY", color=MUTED, fontsize=7, ha="right")
 
 
-def draw_kp_stars(ax):
-    """The last hours of planetary Kp, one minute each, as stars."""
-    t, kp = load_series("swpc-planetary-k-index-1m.json", "estimated_kp")
-    rng = np.random.default_rng(11)                     # fixed seed, same sky
-    x = np.linspace(0.04, 0.96, kp.size)
-    y = GAP + 0.06 + rng.random(kp.size) * 0.24
-    ax.scatter(x, y, s=0.6 + 3.0 * (kp / 3.0) ** 2, color="#D6F5E6",
-               alpha=0.12 + 0.35 * np.clip(kp / 3.0, 0, 1), lw=0, zorder=5)
+def draw_ridges(ax, ranges):
+    x = np.linspace(.06, .94, 1500)
+    all_peaks = 0
+    for i, rows in enumerate(ranges):
+        dates, v = zip(*rows)
+        v = np.asarray(v)
+        # Edge padding for the centred 45-day mean; no extra dates are created.
+        smooth = np.convolve(np.pad(v, SMOOTH_DAYS // 2, mode="edge"), np.ones(SMOOTH_DAYS) / SMOOTH_DAYS, mode="valid")
+        xx = np.linspace(.06, .94, len(v))
+        crest = np.interp(x, xx, smooth) / 9
+        base = .481 - .027 * i
+        y = base + .19 * crest
+        color = RIDGE_MAP(i / max(1, len(ranges) - 1))
+        ax.fill_between(x, .253, y, color=color, zorder=20+i*2)
+        # Contours repeat the measured silhouette; repetitions are texture,
+        # not more measurements or imaginary topography.
+        lines = [np.column_stack([x, np.where(y - j * .0025 >= .253, y - j * .0025, np.nan)]) for j in range(17)]
+        ax.add_collection(LineCollection(lines, colors=CYAN if i < 6 else "#8193ff", linewidths=.35, alpha=.20, zorder=21+i*2))
+        ax.plot(x, y, color=CYAN if i < 6 else "#90a4ff", lw=.65, alpha=.95, zorder=21+i*2)
+        # Highlight ALL Kp=9 days, not an arbitrarily selected "strongest" one.
+        extreme = np.flatnonzero(v == 9)
+        all_peaks += len(extreme)
+        px = xx[extreme]
+        py = base + .19 * smooth[extreme] / 9
+        ax.scatter(px, py, s=8, c=LIME, lw=0, zorder=60)
+        ax.text(.045, base+.06, f"{dates[0].year}\n{dates[-1].year}", color=MUTED, ha="right", fontsize=6.2, linespacing=1.0, zorder=80)
+    ax.text(.06, .591, "02 / GEOMAGNETIC MEMORY", color=CYAN, fontsize=8, weight="bold")
+    ax.text(.94, .591, f"{all_peaks} DAYS REACHED Kp 9  /  LIME MARKERS", color=LIME, fontsize=7, ha="right")
+    ax.text(.06, .231, "START OF EACH RANGE", color=MUTED, fontsize=6.5)
+    ax.text(.94, .231, "END OF EACH RANGE  →", color=MUTED, fontsize=6.5, ha="right")
+    ax.text(.50, .231, "45-day mean of daily maximum Kp · equal height scale · each range has its own years", color=MUTED, fontsize=6.5, ha="center")
 
 
-# ------------------------------------------------------------------ main
+def draw_legend(fig, times, values, ranges):
+    # Small quantitative traces anchor the artwork in units and real ranges.
+    history = np.array([v for rows in ranges for _, v in rows])
+    specs = [
+        ("01  Kp", "RIDGE HEIGHT", "0–9 · unitless", history, CYAN),
+        ("02  SPEED", "THREAD LENGTH", "300–380 km/s", values[:, 0], CYAN),
+        ("03  Bz · GSM", "THREAD HUE", "−5 nT cyan → +5 nT violet", values[:, 4], PURPLE),
+        ("04  Bt", "THREAD OPACITY", "0–6 nT · faint → bright", values[:, 3], "#b6b5ff"),
+        ("05  DENSITY", "POINT AREA", "0–5 protons/cm³", values[:, 1], LIME),
+        ("06  TEMPERATURE", "POINT HUE", "20–100 kK · cyan → lime", values[:, 2], LIME),
+    ]
+    for j, (title, encoding, scale, v, color) in enumerate(specs):
+        left = .055 + j * .15
+        fig.text(left, .183, title, color=color, fontsize=9, weight="bold")
+        fig.text(left, .163, encoding, color=INK, fontsize=6.8)
+        fig.text(left, .145, scale, color=MUTED, fontsize=6.4)
+        ax = fig.add_axes([left, .085, .125, .043], facecolor="none")
+        if j == 0:
+            # Monthly-like 30-day block means only in this compact overview.
+            vv = history[:len(history)//30*30].reshape(-1,30).mean(axis=1)
+            xx = np.linspace(0,1,len(vv))
+        else:
+            vv, xx = v, times
+        ax.plot(xx, vv, color=color, lw=.6)
+        ax.set_xlim(xx[0], xx[-1])
+        ax.set_ylim((0,9) if j == 0 else (min(vv[np.isfinite(vv)]), max(vv[np.isfinite(vv)])))
+        ax.axis("off")
+        good = v[np.isfinite(v)]
+        label = f"observed {min(good):.2f}–{max(good):.2f}"
+        if j == 5:
+            label = f"observed {min(good)/1000:.1f}–{max(good)/1000:.1f} kK"
+        fig.text(left, .069, label, color=MUTED, fontsize=6.4)
+
+
 def main():
-    years, profiles, storm = load_yearly_kp()
-    ranges = decade_ranges(years, profiles)
-    print(f"gfz: {len(years)} years in {len(ranges)} ranges, "
-          f"strongest storm {storm['date']} Kp {storm['kp']:.2f}")
+    args = argparse.ArgumentParser(description=__doc__)
+    args.add_argument("--no-show", action="store_true", help="save PNG without opening a window")
+    no_show = args.parse_args().no_show
+    if no_show:
+        matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 
-    fig = plt.figure(figsize=(13.0, 7.4), facecolor=SKY_TOP)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-
-    # sky: teal at the horizon fading to ink overhead - the gradient is
-    # pinned so the horizon colour lands right at the horizon line
-    grad = np.linspace(0, 1, 600).reshape(-1, 1)
-    ax.imshow(grad, extent=[0, 1, GAP - 0.45, 1], origin="lower", aspect="auto",
-              cmap=LinearSegmentedColormap.from_list("sky", [SKY_HORIZON, SKY_TOP]),
-              zorder=0)
-
-    draw_aurora(ax)
-    draw_kp_stars(ax)
-    draw_ridges(ax, ranges, storm)
-
-    # a thin gold horizon, the one warm note in a cold picture
-    ax.plot([0.04, 0.96], [GAP, GAP], color=GOLD, lw=0.7, alpha=0.4,
-            zorder=200)
-
-    ax.text(0.05, 0.945, "A U R O R A   W A V E S", color=TEXT, fontsize=13,
-            alpha=0.92, zorder=300, ha="left", va="center")
-    ax.text(0.05, 0.905,
-            f"{len(years)} years of geomagnetic weather, in one range",
-            color=TEXT, fontsize=8, alpha=0.55, zorder=300, ha="left",
-            va="center", style="italic")
-
-    ax.text(0.97, 0.955,
-            f"RANGES  daily maximum Kp, one range per decade, {years[0]}-{years[-1]}"
-            "  ·  GFZ Niemegk, CC BY 4.0\n"
-            "THREADS  solar wind speed and southward Bz, one minute per point, "
-            "2026-09-20 to 2026-09-22  ·  NOAA SWPC",
-            color=TEXT, fontsize=6.4, alpha=0.62, zorder=300, ha="right",
-            va="top", linespacing=1.8)
-
-    out = OUT / "aurora-waves.png"
-    fig.savefig(out, dpi=200, facecolor=SKY_TOP)
-    print(f"saved {out.relative_to(ROOT)}")
+    count, years, ranges = load_landscape()
+    times, values, paired = load_wind()
+    start, end = [datetime.fromtimestamp(t, timezone.utc) for t in (times[0]-150, times[-1]+150)]
+    print(f"GFZ: {count:,} raw rows; {len(years)} complete years {years[0]}–{years[-1]}")
+    print(f"SWPC: {paired:,} paired active minutes; {np.isfinite(values).all(axis=1).sum()} valid five-minute bins / {len(times)}")
+    print(f"UTC bin edges: {start.isoformat()} → {end.isoformat()}")
+    fig = plt.figure(figsize=(18, 12), facecolor=BG)
+    ax = fig.add_axes([0,0,1,1])
+    ax.set(xlim=(0,1), ylim=(0,1)); ax.axis("off")
+    # Atmospheric background is layout, not a measurement.
+    yy, xx = np.mgrid[0:1:800j, 0:1:1200j]
+    rgba = np.zeros((*yy.shape,4))
+    rgba[:,:,:3] = to_rgb("#293977")
+    rgba[:,:,3] = .45 * np.exp(-((yy-.59)/.26)**2) * (.6+.4*np.sin(xx*np.pi))
+    ax.imshow(rgba, extent=(0,1,0,1), origin="lower", aspect="auto")
+    fig.text(.055,.945,"AURORA WAVES",color=INK,fontsize=34,weight="normal")
+    fig.text(.058,.916,"A landscape made from six measurements of space weather",color=MUTED,fontsize=10)
+    fig.text(.945,.951,"94 YEARS / ONE DAY" if len(years)==94 else f"{len(years)} YEARS / SOLAR WIND",color=LIME,fontsize=10,ha="right")
+    fig.text(.945,.928,f"GFZ {years[0]}–{years[-1]}  ·  NOAA {start:%d}–{end:%d %b %Y}",color=MUTED,fontsize=8,ha="right")
+    draw_curtain(ax, times, values)
+    draw_ridges(ax, ranges)
+    ax.plot([.055,.945],[.208,.208],color=MUTED,lw=.5,alpha=.35)
+    draw_legend(fig,times,values,ranges)
+    fig.text(.055,.033,"GFZ Niemegk · CC BY 4.0  /  NOAA SWPC · active spacecraft  /  cached 22 September 2026",color=MUTED,fontsize=7)
+    fig.text(.945,.033,"DATA ART  ·  colours are encodings, not observed auroral colours",color=MUTED,fontsize=7,ha="right")
+    OUT.mkdir(exist_ok=True)
+    fig.savefig(OUT/"aurora-waves.png",dpi=200,facecolor=BG)
+    print("saved out/aurora-waves.png")
+    if not no_show:
+        plt.show()
+    plt.close(fig)
 
 
 if __name__ == "__main__":

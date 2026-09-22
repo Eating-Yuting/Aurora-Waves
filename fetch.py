@@ -8,8 +8,8 @@ Fetch the numbers once, save the raw replies to data/, and never fetch again.
 
     uv run fetch.py
 
-Phenomenon: the aurora. Five raw replies from NOAA's Space Weather Prediction
-Center, each carrying a different dimension of the same event. They are saved
+Phenomenon: the aurora. Four raw replies from NOAA's Space Weather Prediction
+Center and one historical Kp file from GFZ, covering different time spans. They are saved
 byte for byte, as they arrived, because the machine that marks this may have
 no network: if the file is not in the repository, nothing happened.
 
@@ -46,8 +46,7 @@ DATA = HERE / "data"
 def fetch(url, path):
     """Ask for the file once. If it is already in data/, do nothing."""
     if path.exists():
-        print(f"data/{path.name} is already here ({path.stat().st_size // 1024} KB). "
-              "Delete it to fetch again.")
+        print(f"cached data/{path.name} ({path.stat().st_size // 1024} KB)")
         return path
     DATA.mkdir(exist_ok=True)
     print(f"asking {url}")
