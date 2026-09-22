@@ -117,7 +117,10 @@ def draw_veil(ax, times, values):
     return smooth
 
 
-def draw_memory(ax, ranges):
+def draw_memory(ax, ranges, label_dy=0.0):
+    """The 94-year landscape. `label_dy` only moves the two caption rows, for
+    versions that need the band above them (V04's week strip). The ridges and
+    the labels' meaning are untouched."""
     x=np.linspace(.055,.945,1800)
     cmap=LinearSegmentedColormap.from_list('night_ridges',['#134336','#0c3433','#0a232c','#07151e'])
     peaks=0
@@ -135,10 +138,10 @@ def draw_memory(ax, ranges):
         extreme=np.flatnonzero(vals==9); peaks+=len(extreme)
         ax.scatter(source_x[extreme],base+.16*avg[extreme]/9,s=5,color='#caff93',alpha=.85,zorder=z+1,lw=0)
         ax.text(.045,base+.052,f'{dates[0].year}\n{dates[-1].year}',ha='right',va='center',fontsize=5.5,color=MUTED,linespacing=1.1,zorder=60)
-    ax.text(.055,.387,'02   /   94 YEARS OF GEOMAGNETIC MEMORY',fontsize=7.5,color=MUTED,zorder=70)
-    ax.text(.945,.387,f'{peaks} Kp-9 DAYS  ·  45-DAY SMOOTHING',ha='right',fontsize=7.5,color=MUTED,zorder=70)
-    ax.text(.055,.112,'EACH RIDGE HAS ITS OWN YEARS: START → END',fontsize=6,color=MUTED,zorder=70)
-    ax.text(.945,.112,'EQUAL Kp HEIGHT SCALE  /  LANDSCAPE COLOURS ARE DECORATIVE',ha='right',fontsize=6,color=MUTED,zorder=70)
+    ax.text(.055,.387+label_dy,'02   /   94 YEARS OF GEOMAGNETIC MEMORY',fontsize=7.5,color=MUTED,zorder=70)
+    ax.text(.945,.387+label_dy,f'{peaks} Kp-9 DAYS  ·  45-DAY SMOOTHING',ha='right',fontsize=7.5,color=MUTED,zorder=70)
+    ax.text(.055,.112+label_dy,'EACH RIDGE HAS ITS OWN YEARS: START → END',fontsize=6,color=MUTED,zorder=70)
+    ax.text(.945,.112+label_dy,'EQUAL Kp HEIGHT SCALE  /  LANDSCAPE COLOURS ARE DECORATIVE',ha='right',fontsize=6,color=MUTED,zorder=70)
 
 
 def draw_key(fig, values):
