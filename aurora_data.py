@@ -8,7 +8,7 @@ Look at the numbers before drawing them. Print what each file in data/
 actually contains: how many records, which fields, what the first and
 last rows look like, and the range of the interesting columns.
 
-    uv run peek.py
+    uv run aurora_data.py
 """
 
 import json
@@ -70,10 +70,11 @@ def main():
     lines = [l for l in (DATA / "gfz-kp-ap-since-1932.txt").read_text().splitlines()
              if l and not l.startswith("#")]
     first, last = lines[0].split(), lines[-1].split()
-    kps = [float(l.split()[4]) for l in lines]
+    # columns: YYYY MM DD hh.h hh._m days days_m Kp ap D  ->  Kp is index 7
+    kps = [float(l.split()[7]) for l in lines]
     print(f"\ngfz: {len(lines):,} records,  {first[0]}-{first[1]}-{first[2]}  ->  "
           f"{last[0]}-{last[1]}-{last[2]}")
-    print("  columns: year month day hour_from Kp ap daily_Ap SN F107")
+    print("  columns: YYYY MM DD hh.h hh._m days days_m Kp ap D")
     print(f"  Kp (0-9, 3-hourly)          min {min(kps):>10.2f}   "
           f"max {max(kps):>10.2f}   (unitless)")
     print("\nDone. Now we know what every number means - time to draw.")
