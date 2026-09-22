@@ -4,59 +4,63 @@
 # ///
 
 """
-Read the file in data/, make one picture, save it to out/.
+Read the files in data/, make one plain picture, save it to out/.
 
     uv run plot.py
 
-Three parts, and you will replace all three: rows() reads the file the way *your*
-file needs reading, the loop in main() picks the numbers out of it, and the plot at
-the bottom is the transformation you chose. Print before you plot.
+This is the ugly first version, on purpose: does the pipeline work, and what
+do yesterday's numbers actually look like? Two panels, one day, minute by
+minute - Kp on top (how strong the disturbance was), Bz below (which way the
+solar wind's magnetic field pointed). The beautiful version comes later.
 """
 
-import csv
+import json
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-FILE = "hko-daily-mean-temperature-2026.csv"   # CHANGE ME: the same name as in fetch.py
-PICTURE = "plot.png"                           # what goes into out/, and into the README
-
 HERE = Path(__file__).parent
-DATA = HERE / "data" / FILE
+DATA = HERE / "data"
 OUT = HERE / "out"
 
-
-def rows(path):
-    """The file as a list of lists, one per line. The Observatory puts three lines
-    of titles above the table and a legend below it, so keep only the lines that
-    start with a year."""
-    kept = []
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        for line in csv.reader(handle):
-            if line and line[0].isdigit():
-                kept.append(line)
-    return kept
+PICTURE = "aurora-first-look.png"
 
 
 def main():
-    table = rows(DATA)
-    print(f"{DATA.name}: {len(table)} rows. The first one: {table[0]}")
+    kp = json.loads((DATA / "swpc-planetary-k-index-1m.json").read_text())
+    mag = json.loads((DATA / "swpc-solar-wind-mag-1m.json").read_text())
 
-    days, values = [], []
-    for i, (year, month, day, value, quality) in enumerate(table):   # the loop over the numbers
-        if value == "***":                   # the Observatory's word for "missing"
-            continue
-        days.append(i + 1)
-        values.append(float(value))          # it arrived as text; make it a number
-    print(f"{len(values)} values, from {min(values)} to {max(values)}")
+    def series(rows, key):
+        """time_tag text -> datetime, keep only rows where the key is numeric."""
+        xs, ys = [], []
+        for row in rows:
+            value = row.get(key)
+            if isinstance(value, (int, float)):
+                xs.append(datetime.fromisoformat(row["time_tag"]))
+                ys.append(value)
+        return xs, ys
 
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(days, values, color="#d6591d", linewidth=1.5)
-    ax.set_xlabel("day of 2026")
-    ax.set_ylabel("daily mean temperature, °C")
-    ax.set_title("Hong Kong Observatory, 2026 so far")
+    print(f"kp: {len(kp)} rows, mag: {len(mag)} rows")
+
+    kp_x, kp_y = series(kp, "estimated_kp")
+    bz_x, bz_y = series(mag, "bz_gsm")
+    print(f"Kp from {min(kp_y)} to {max(kp_y)}, Bz from {min(bz_y)} to {max(bz_y)} nT")
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+
+    ax1.plot(kp_x, kp_y, color="#1f77b4")
+    ax1.set_ylabel("estimated Kp")
+    ax1.set_title("Aurora first look - last 24 hours, one minute per point")
+    ax1.grid(True, alpha=0.3)
+
+    ax2.plot(bz_x, bz_y, color="#d62728")
+    ax2.set_ylabel("Bz, nT")
+    ax2.set_xlabel("time (UTC)")
+    ax2.axhline(0, color="black", linewidth=0.8)
+    ax2.grid(True, alpha=0.3)
+
     fig.tight_layout()
-
     OUT.mkdir(exist_ok=True)
     fig.savefig(OUT / PICTURE, dpi=150)
     print(f"saved out/{PICTURE}")
