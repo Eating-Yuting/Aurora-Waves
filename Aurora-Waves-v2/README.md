@@ -1,21 +1,14 @@
-# Aurora Waves
+# Aurora Waves · V02 — Emerald Veil
+
+> **Archived — V02.** A read-only snapshot of the current version. The working copy is at the [repository top level](../README.md); the raw data is shared from `../data/` rather than duplicated here.
+>
+> **归档说明**：这是第二版的只读快照。当前使用中的副本在[仓库顶层](../README.md)，原始数据统一放在顶层 `data/`。
 
 ![Emerald Veil: a green auroral curtain with a purple lower hem above dark geomagnetic mountain ranges](out/aurora-waves-v02-emerald-veil.png)
 
 This second version takes the mountain-and-curtain composition from the earlier Aurora Waves picture and gives it a quieter night palette. Pale green carries the brightest light, jade sits in the shadows, and a small purple border runs beneath the curtain. NOAA describes pale green as the most common auroral colour and notes that some auroras have a purple lower edge [1]. That informed the palette. The colours here are a design choice, not a reconstruction of what an observer would have seen.
 
 I kept the same published data so the two versions can be compared without changing both the numbers and the design at once. The upper curtain uses NOAA solar-wind observations from 21–22 September 2026 UTC [2]. The lower mountain ranges use 94 complete years of GFZ Kp data, 1932–2025 [3]. The sky and mountains have separate timelines: horizontal position in the sky is recent UTC time, while each mountain runs from the beginning to the end of its labelled years.
-
-## Two versions in this repository
-
-![Aurora Waves V01: cyan and violet mountains beneath a curtain of solar-wind measurements](out/aurora-waves.png)
-
-The picture above the line is V01; the one at the top of this page is V02. Each version also has a read-only archive folder holding that version's scripts, README and picture as they stood. The raw data is kept once, in `data/`, and both versions read it from there.
-
-| Version | Archive folder | How it differs |
-|---|---|---|
-| **V01** | [`Aurora-Waves-v1/`](Aurora-Waves-v1/) | Jade-green ranges under a cyan-to-violet curtain. Bz is encoded as the curtain's thread hue, and the strands are hard vertical bars. |
-| **V02** | [`Aurora-Waves-v2/`](Aurora-Waves-v2/) | Emerald Veil. Bz moves to the position of the curtain's lower edge, the bars become a fading light field softened only inside valid runs, and the palette follows the auroral colours NOAA describes. |
 
 ## What the six measurements do
 
@@ -68,7 +61,7 @@ uv run test_data.py
 uv run test_v02.py
 ```
 
-`fetch.py` reuses the cached files. The plotting scripts work offline once their dependencies are installed. The original `aurora_waves.py` is retained because V02 reuses its data-loading functions; running it still creates the separate V01 filename `out/aurora-waves.png`. Everything works the same from inside the archive folders, except that they share the single `data/` kept at the top level.
+`fetch.py` reuses the cached files. The plotting scripts work offline once their dependencies are installed. The original `aurora_waves.py` is retained because V02 reuses its data-loading functions; running it still creates the separate V01 filename `out/aurora-waves.png`.
 
 ## References
 
@@ -81,5 +74,3 @@ uv run test_v02.py
 ## 中文说明
 
 这是单独保存的第二版：`aurora_waves_v02.py` 对应 `aurora-waves-v02-emerald-veil.png`，不会覆盖第一版。新版保留六项数据，把极光绿作为主色，辅以青绿、少量紫色下缘和红色辉光。Bz 改为控制光幕下缘的位置，让主体颜色更接近极光观感。光幕经过 45 分钟柔化，但缺测位置仍留空；光点面积和颜色保留五分钟数据的变化。这里呈现的是数据艺术，不是实拍照片或极光可见性预测。
-
-仓库里两个版本各有一个归档文件夹：`Aurora-Waves-v1/` 是第一版（青绿山峦、青紫光幕），`Aurora-Waves-v2/` 是第二版（Emerald Veil）。原始数据只保存一份，放在顶层 `data/`，两个版本共用。
