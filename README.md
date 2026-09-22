@@ -14,7 +14,7 @@ The curtain uses solar-wind observations from NASA's OMNI archive, 7–14 Octobe
 
 ## Four versions in this repository
 
-Every version has its own folder holding that version's scripts, README and pictures as they stood. The raw data is kept once, in `data/`, and all four read it from there. Open a folder to read the code behind a version; open one of the pictures to see it full size without running anything.
+Every version has its own folder holding that version's scripts, README and still picture as they stood. The raw data is kept once, in `data/`, and all four read it from there; each animation is kept once too, in `out/`, linked from the folder that produced it. Nothing but the stills is duplicated. Open a folder to read the code behind a version; open one of the pictures to see it full size without running anything.
 
 | Version | Its folder | Its picture | How it differs |
 |---|---|---|---|
@@ -166,7 +166,7 @@ V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and bot
 
 这是单独保存的第二版：`aurora_waves_v02.py` 对应 `aurora-waves-v02-emerald-veil.png`，不会覆盖第一版。新版保留六项数据，把极光绿作为主色，辅以青绿、少量紫色下缘和红色辉光。Bz 改为控制光幕下缘的位置，让主体颜色更接近极光观感。光幕经过 45 分钟柔化，但缺测位置仍留空；光点面积和颜色保留五分钟数据的变化。这里呈现的是数据艺术，不是实拍照片或极光可见性预测。
 
-四个版本各有一个归档文件夹：`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`，里面分别放着那一版的脚本、说明和成品图。**最终版本是第四版（V04）**，使用中的副本在顶层（也就是本页），同一份内容也已归档到 `Aurora-Waves-v4/`。原始数据只保存一份，放在顶层 `data/`，四个版本共用。
+四个版本各有一个归档文件夹：`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`，里面分别放着那一版的脚本、说明和静帧。**最终版本是第四版（V04）**，使用中的副本在顶层（也就是本页），同一份内容也已归档到 `Aurora-Waves-v4/`。原始数据只保存一份，放在顶层 `data/`，四个版本共用；动画（GIF）同样只存一份在顶层 `out/`，由产出它的归档文件夹链接过去，避免同一个文件存两份、日后互相不一致。
 
 想直接看可视化，不用跑任何代码：点开 `out/aurora-waves-v04-week-in-motion.gif` 就是最终版的动画（GitHub 上会直接播放），点开 `out/aurora-waves-v04-poster.png` 是最终版的静帧；其余三版的成品图同样可以直接点开查看（见上文表格里的链接）。
 
