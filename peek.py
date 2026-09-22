@@ -8,7 +8,7 @@ Look at the numbers before drawing them. Print what each file in data/
 actually contains: how many records, which fields, what the first and
 last rows look like, and the range of the interesting columns.
 
-    uv run inspect.py
+    uv run peek.py
 """
 
 import json
