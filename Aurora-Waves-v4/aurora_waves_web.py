@@ -555,6 +555,12 @@ def main():
         SITE.mkdir(parents=True)
     figure.write_html(PAGE, include_plotlyjs='cdn', auto_open=False,
                       config={'displaylogo': False, 'responsive': True})
+    # Plotly's write_html emits no <title>, so the tab would show the file's URL.
+    # Give it the page's own name, in the same words the README calls it by.
+    meta = '<meta charset="utf-8" />'
+    titled = ('<meta charset="utf-8" />\n    '
+              '<title>Aurora Waves — read the week again</title>')
+    PAGE.write_text(PAGE.read_text().replace(meta, titled, 1), encoding='utf-8')
     print(f'wrote site/index.html — {PAGE.stat().st_size // 1024} KB, '
           f'{stats["frames"]} frames of {args.window:g} h, {stats["span_hours"]:.0f} h of record')
     print(f'{stats["paired"]} paired minutes; {stats["bins"]} of {stats["total"]} five-minute bins '
