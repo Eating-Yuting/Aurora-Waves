@@ -64,9 +64,18 @@ BZ_FULL = 45                               # nT, the clip on the lower-edge posi
 DENSITY_FULL = 30                          # protons/cm^3, the clip on point area
 TEMP_LO, TEMP_HI = 20000, 500000           # K
 
-FIG = (18, 12)
-FRAME_DPI = 60          # 1080 x 720, sized for a looping GIF held entirely in memory
-POSTER_DPI = 150
+# The canvas is 1.6x smaller than V03's and every dpi below is 1.6x higher, so both
+# pictures keep exactly the pixels they had — 1080 x 720 frames, a 2700 x 1800 poster.
+# What changes is the size of everything measured in POINTS rather than in fractions
+# of the canvas: type, rules and light points all land 1.6x larger relative to the
+# picture. That is the whole point. At 18 x 12 in the poster was still 2700 px wide,
+# but a README column is about 880, so a 6 pt caption survived the downscale as
+# roughly 4 px and could not be read. The composition does not move: the drawing is
+# in relative coordinates and the curtain is a raster, so this is the same picture
+# with legible lettering.
+FIG = (11.25, 7.5)
+FRAME_DPI = 96          # 1080 x 720, sized for a looping GIF held entirely in memory
+POSTER_DPI = 240        # 2700 x 1800
 PALETTE_COLOURS = 128   # one palette for the whole loop, so colours cannot flicker
 PICKS = 9               # frames sampled when building that shared palette
 LEGAL = ('NASA OMNI / CDAWeb   ·   GFZ CC BY 4.0   /   archived observations   '
