@@ -4,6 +4,7 @@
 
 - **[See it move →](out/aurora-waves-v04-week-in-motion.gif)** — the final visualisation. 161 frames, 17.7 seconds, loops. The link opens the file itself, so it plays full size.
 - **[See the still →](out/aurora-waves-v04-poster.png)** — the frame containing the week's deepest Bz.
+- **[Read the week again →](https://eating-yuting.github.io/Aurora-Waves/)** — the same week as a page with one time slider, where you can stop on a moment and read the six numbers behind it. It is rebuilt from `data/` on every push; to open it with the wifi off, run the one `uv run` line in that section.
 - **[Read the reasoning →](PROCESS.md)** — how each version was made, including one measurement that had to be corrected.
 
 ![Emerald Veil in motion, V04: a green auroral curtain through the geomagnetic storm of 10 October 2024, above dark mountain ranges built from 94 years of Kp](out/aurora-waves-v04-poster.png)
@@ -152,6 +153,20 @@ uv run aurora_waves_v04.py --duration 140     # slower playback
 
 V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and both animations share one implementation of the curtain. About ninety seconds for 161 frames on a laptop.
 
+## Read the week again — one slider for time
+
+```sh
+uv run aurora_waves_web.py
+```
+
+No window opens and no picture is drawn. This writes `site/index.html`, and the browser draws that: the whole week across the top, the curtain in the middle, and the six measurements as a strip underneath, all driven by one slider. `site/` is output — it is in `.gitignore` and is never committed, and this script is the thing that rebuilds it.
+
+The slider is the only control, and one is the point. It moves an eight-hour window across the week, one hour per step, at the same pace as the GIF, and it never zooms. Six sliders, one per measurement, were the obvious alternative and are the wrong one: scrubbing each measurement on its own clock is exactly what makes a picture say six things at once, and this drawing only ever had one clock. Six rows therefore move together, each carrying the name, the unit and what it drives in the picture — the encodings are the table above, written out in words where you can see them against the drawing. The rows use the picture's own rulers, with one exception: temperature climbs from 13,000 K in the quiet stretches to 1,860,000 K in the storm, so that one row is spaced logarithmically, while the point *colour* in the picture stays linear in temperature exactly as V04 draws it.
+
+Two things the page gives up, both named because they are where it stops being the poster. The mountains are absent: 94 years of Kp have no clock to slide, so the first row shows this week's own three-hour Kp instead — the same index the ridges are built from, and the one part of the picture that does have a clock. And the glow is five stacked bands rather than V04's raster: a browser will not hold a 2,700-pixel glow for every moment, and a filled band cannot carry an opacity that varies along time, so a faint aurora is drawn short as well as faint. The numbers, the smoothing, the geometry and the colour map are imported from `aurora_waves_v04.py` and `aurora_waves_v02.py` rather than copied, so the page cannot drift away from the still.
+
+It is served at **<https://eating-yuting.github.io/Aurora-Waves/>**: `.github/workflows/pages.yml` rebuilds it from `data/` on every push — the course's own `pages.yml` with its one line changed to `uv run aurora_waves_web.py`. The GIF is the picture; this is only a way to stop on one moment of it.
+
 ## References
 
 [1] NOAA Space Weather Prediction Center. Aurora Tutorial [EB/OL]. [2026-09-22]. https://www.spaceweather.gov/content/aurora-tutorial
@@ -173,3 +188,5 @@ V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and bot
 第三版 `aurora_waves_v03.py` 在第二版的基础上加了帧动画：把一天 24 小时的太阳风通过一个 8 小时宽的滑动窗口呈现，让绿色光幕流动起来，山峦保持静止（94 年的 Kp 记录本身没有时间轴）。整个循环 9.6 秒、96 帧、约 5 MB，全部帧共用同一套 128 色调色板，避免颜色闪烁；时间轴下方那条亮绿色的短线，标出当前窗口在一天中的位置。
 
 第四版 `aurora_waves_v04.py` 把时间轴从一天拉长到一周。因为 NOAA 的实时接口只保留 24 小时，这一周的数据改用 NASA 的 OMNI 档案（经由 CDAWeb 的 HAPI 接口抓取一次、原样存入 `data/`），选的是 2024 年 10 月 7–14 日——10 日发生了磁暴，Kp 达 8.7、Bz 低到 −46 nT。窗口仍是 8 小时宽、每小时推进一帧，所以节奏和第三版一致；新增了一条「周条」，把整整七天的光幕高度压缩成一条轮廓，并标出当前窗口的位置和磁暴那天。编码方式与第二版相同，但刻度按这一周的真实分布放宽（否则整场磁暴会被压缩成一种颜色）。两台仪器的缺测时段不同，所以第四版改为「各自在自己有效的分钟内取平均、同一时钟窗口内两者都在场才算有效」，2016 个五分钟窗口里 1921 个可用（95.3%）；剩下的 95 个空窗全部如实留空，不插值补齐——光幕辉光在缺口处渐隐，但边线和光点仍然断开，缺口看得见。
+
+另外还有一个网页版 `aurora_waves_web.py`（写出 `site/index.html`，`site/` 是产物、不入库）。它不是第二张图，而是「把同一周再读一遍」的工具：上面是整周，中间是光幕，下面是把六个维度横向摊开的六行，全部由**一条**时间滑块驱动——8 小时宽的窗口每小时推进一格，和 GIF 同一个节奏。只用一条而不是六条滑块，是因为每个量各按自己的时钟拖动，正是让一张图同时说六件事的做法；一条时钟才能保证六个量看的是**同一刻**。六行各自标着名字、单位和它控制画面里的什么，刻度沿用画面自己的标尺，只有温度那行改成对数间隔（本周从 13,000 K 升到 1,860,000 K，线性轴会把半周压成一条贴底的线；而画面里光点的**颜色**仍然线性对应温度）。有两处如实放弃：山峦不在页面里，因为 94 年的 Kp 没有时钟可拖，第一行改用本周自己的三小时 Kp（它和山峦用的是同一个指数）；光幕改成五层堆叠色带，因为浏览器托不住每个时刻一张 2700 像素的贴图，而色带的透明度无法随时间变化，所以「越暗的极光画得越短」——这是对编码的重新解读，不是照抄。上线地址是 https://eating-yuting.github.io/Aurora-Waves/ ：`.github/workflows/pages.yml` 每次推送都会从 `data/` 重新生成它（就是课程给的 `pages.yml`，只改了那一行 `uv run aurora_waves_web.py`）。GIF 才是那张图，这个页面只是能让你停在其中某一刻。
