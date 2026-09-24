@@ -24,6 +24,10 @@ The first measurement of the OMNI archive was pessimistic and wrong. Counting on
 
 So V04 averages each instrument over its own valid minutes within a shared five-minute bin, and a bin exists when both are present. Under that rule 1,921 of 2,016 bins are usable: 95.3 per cent of the week. What remains missing is kept missing — 95 empty bins, including one gap of about three hours and twenty minutes on 13 October. Nothing is interpolated across a gap, in the sky or in the strip. The curtain's glow fades softly into each gap rather than stopping dead, but the edge line still breaks and the light points still stop: the hole is there to be seen.
 
+## A size that had to change
+
+The poster is 2,700 pixels wide, which is right for a file you open and wrong for a README: GitHub's column is about 880, so a 6 pt caption was arriving as roughly 4 pixels. Font size, line width and point size are measured in *points* — relative to the physical figure, not to the pixel count — so the canvas went from 18 × 12 inches to 11.25 × 7.5 and every dpi went up by the same 1.6: frames 60 → 96, poster 150 → 240. Both pictures keep exactly the pixels they had, and everything measured in points is now 1.6 times larger relative to the picture. Nothing moved: the drawing is in relative coordinates and the curtain is a raster.
+
 ## Files here
 
 | File | What it is |
@@ -31,6 +35,7 @@ So V04 averages each instrument over its own valid minutes within a shared five-
 | `out/aurora-waves-v04-poster.png` | The poster frame — the window holding the week's deepest Bz, 10 October 2024. |
 | `out/aurora-waves-v04-week-in-motion.gif` | The final animation: 161 frames, 17.7 seconds, about 3.6 MB. The same file is also at the top level. |
 | `aurora_waves_v04.py` | The final version. It imports its drawing from `aurora_waves_v02.py` rather than copying it, so the still and both animations share one implementation of the curtain. |
+| `aurora_waves_web.py` | Writes `site/index.html`: the same week with one slider for time, so a moment can be stopped on and its six numbers read. It imports the numbers, the geometry and the colour map from the scripts above rather than re-implementing them. `site/` is output and is never committed. |
 | `fetch_omni.py` | Fetches the archive week once from NASA's CDAWeb HAPI interface and saves the reply unchanged. |
 | `aurora_waves_v02.py`, `aurora_waves_v03.py`, `aurora_waves.py`, `aurora_data.py` | The drawing and loading code V04 depends on. |
 | `fetch.py`, `plot.py`, `test_data.py`, `test_v02.py` | The original fetcher and the checks, as they stood. |
@@ -41,6 +46,7 @@ To run it, copy `../data/` in beside this README first, then:
 ```sh
 uv run aurora_waves_v04.py
 uv run aurora_waves_v04.py --window 12 --duration 140
+uv run aurora_waves_web.py                 # writes site/index.html — open it in a browser
 ```
 
 ## 中文说明
@@ -50,3 +56,5 @@ uv run aurora_waves_v04.py --window 12 --duration 140
 编码方式与第二版相同，但刻度按这一周的真实分布放宽（否则整场磁暴会被压缩成一种颜色）。两台仪器的缺测时段不同，所以第四版改为「各自在自己有效的分钟内取平均、同一时钟窗口内两者都在场才算有效」，2016 个五分钟窗口里 1921 个可用（95.3%）；剩下的 95 个空窗全部如实留空，不插值补齐——光幕辉光在缺口处渐隐，但边线和光点仍然断开，缺口看得见。
 
 看动画：本页顶部那张图会动；想全尺寸查看，直接点开 `out/aurora-waves-v04-week-in-motion.gif`。
+
+另外改了一处**字号**：海报 2700 像素宽，挂在 README 里只有约 880 像素，原来的字缩下去读不出来。字号、线宽、点径都是按「点」计量的（相对图幅而不是相对像素），所以把画布从 18×12 英寸改成 11.25×7.5、所有 dpi 同比例乘 1.6（帧 60→96、海报 150→240）：两张图仍是原来的像素尺寸，而所有以点计量的元素相对图幅放大了 1.6 倍，构图没有移动。同目录还有一个网页版 `aurora_waves_web.py`，写出 `site/index.html`——用一条时间滑块把同一周重新读一遍，可以停在某一刻读那六个数字；数据和几何都从上面的脚本导入，所以不会和静帧走散。`site/` 是产物，不入库。
