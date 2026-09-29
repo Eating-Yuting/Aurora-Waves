@@ -4,7 +4,7 @@
 
 - **[See it move →](out/aurora-waves-v04-week-in-motion.gif)** — the final visualisation. 161 frames, 17.7 seconds, loops. The link opens the file itself, so it plays full size.
 - **[See the still →](out/aurora-waves-v04-poster.png)** — the frame containing the week's deepest Bz.
-- **[Read the week again →](https://eating-yuting.github.io/Aurora-Waves/)** — the same week as a page with one time slider, where you can stop on a moment and read the six numbers behind it. It is rebuilt from `data/` on every push; to open it with the wifi off, run the one `uv run` line in that section.
+- **[Read the week again →](https://eating-yuting.github.io/Aurora-Waves/)** — the same week as a page with one time slider, where you can stop on a moment and read the six numbers behind it. It is rebuilt from `data/` on every push; after installing the declared Python dependencies, generate the page with the `uv run` line in that section and open `site/index.html` with the wifi off.
 - **[Read the reasoning →](PROCESS.md)** — how each version was made, including one measurement that had to be corrected.
 
 ![Emerald Veil in motion, V04: a green auroral curtain through the geomagnetic storm of 10 October 2024, above dark mountain ranges built from 94 years of Kp](out/aurora-waves-v04-poster.png)
@@ -13,9 +13,36 @@ The picture above is the final version, V04: one week of measured solar wind dra
 
 The curtain uses solar-wind observations from NASA's OMNI archive, 7–14 October 2024 UTC [4] — the week of the geomagnetic storm of 10 October, when Kp reached 8.7 and Bz fell to −46 nT. The mountain ranges use 94 complete years of GFZ Kp data, 1932–2025 [3]. The sky and mountains have separate timelines: horizontal position in the sky is time within the week, while each mountain runs from the beginning to the end of its labelled years.
 
+## Run the final version — V04
+
+Run this from the repository top level. The committed data is already included; no data download is needed. The first run may need internet to install the declared Python dependencies. Later runs use the saved data offline.
+
+```sh
+uv run aurora_waves_v04.py
+```
+
+This writes `out/aurora-waves-v04-week-in-motion.gif` (161 frames, 17.7 seconds, about 3.6 MB) and the poster frame `out/aurora-waves-v04-poster.png`. The same knobs as V03:
+
+```sh
+uv run aurora_waves_v04.py --window 12        # wider window, calmer motion
+uv run aurora_waves_v04.py --frames 80        # shorter loop, smaller file
+uv run aurora_waves_v04.py --duration 140     # slower playback
+```
+
+V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and both animations share one implementation of the curtain. About ninety seconds for 161 frames on a laptop.
+
+### Data acquisition — optional
+
+`fetch.py` and `fetch_omni.py` document how the original replies were obtained. They reuse existing files and download only missing files. They are not required to reproduce the committed artwork; run them only if you need to acquire missing source files, with internet available.
+
+```sh
+uv run fetch.py
+uv run fetch_omni.py
+```
+
 ## Four versions in this repository
 
-Every version has its own folder holding that version's scripts, README, still picture and animation as they stood — open one folder and you have the whole version, pictures included. The raw data is kept once, in `data/`, and all four read it from there; every picture is also copied into `out/` here at the top level, which is where the links below point. Open a folder to read the code behind a version; open one of the pictures to see it full size without running anything.
+Every version has its own folder holding that version's scripts, README, still picture and animation as they stood — open one folder and you have the whole version, pictures included. The raw data is kept once, in the top-level `data/`. Run the scripts at the repository top level for the submitted version. Archive scripts look for `data/` inside their own folder, so copy the top-level `data/` into an archive before re-running it; every picture is also copied into `out/` here at the top level, which is where the links below point. Open a folder to read the code behind a version; open one of the pictures to see it full size without running anything.
 
 | Version | Its folder | Its picture | How it differs |
 |---|---|---|---|
@@ -34,11 +61,11 @@ Files and a copy of this write-up: [`Aurora-Waves-v4/`](Aurora-Waves-v4/).
 
 ![A week in the solar wind: 7–14 October 2024, the storm of 10 October, drawn through a sliding eight-hour window](out/aurora-waves-v04-week-in-motion.gif)
 
-*The loop covers all seven days in 17.7 seconds, one frame per hour of the record. The bright band in the middle is the storm; the week strip underneath shows the whole week with the window marked on it.*
+*The loop covers all seven days in 17.7 seconds, approximately one frame per hour of the record. The bright band in the middle is the storm; the week strip underneath shows the whole week with the window marked on it.*
 
 ![V04 poster frame: the window that contains the week's deepest Bz, 10 October 2024](out/aurora-waves-v04-poster.png)
 
-V04 keeps V03's idea — a window sliding across the record — and widens the record from one day to seven. The window is still eight hours wide and still advances one hour per frame, so the pace of the two animations matches even though the clock does not. What is new:
+V04 keeps V03's idea — a window sliding across the record — and widens the record from one day to seven. Both versions use an eight-hour window. V03 advances approximately ten minutes of observations per frame; V04 advances approximately one hour per frame. What is new:
 
 - **The week strip.** A bare progress line says where you are; this says where you are and what the rest of the week looked like. It is the same curtain-reach encoding, compressed to all 2,016 five-minute bins, with the days that reached Kp 6 or above marked beneath it. Empty bins leave holes here exactly as they do in the sky above.
 - **Re-scaled rulers.** V02 clamps Bz at ±5 nT and Bt at 6 nT, which suits a quiet day. This week reached −46 nT and 48 nT, so every frame would have been pinned to one colour. The three encodings are unchanged; their scales are widened to this week's own distribution.
@@ -58,7 +85,7 @@ Files and a copy of this write-up: [`Aurora-Waves-v3/`](Aurora-Waves-v3/).
 
 ![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](out/aurora-waves-v03-emerald-veil-in-motion.gif)
 
-*The loop covers the whole day in 9.6 seconds, one frame every ten minutes of the record.*
+*The loop covers the whole day in 9.6 seconds, approximately one frame every ten minutes of the record.*
 
 ![Emerald Veil in motion, poster frame: the window at midday](out/aurora-waves-v03-poster.png)
 
@@ -118,7 +145,7 @@ uv run test_data.py
 uv run test_v02.py
 ```
 
-`fetch.py` reuses the cached files. The plotting scripts work offline once their dependencies are installed. The original `aurora_waves.py` is retained because V02 reuses its data-loading functions; running it still creates the separate V01 filename `out/aurora-waves.png`. Everything works the same from inside the archive folders, except that they share the single `data/` kept at the top level.
+`fetch.py` reuses the cached files. The plotting scripts work offline once their dependencies are installed. The original `aurora_waves.py` is retained because V02 reuses its data-loading functions; running it still creates the separate V01 filename `out/aurora-waves.png`. Archive scripts do not automatically read the top-level data folder. Before running an archive, copy the top-level `data/` into that archive folder; use the top-level scripts for the submitted version.
 
 ## Run V03
 
@@ -136,30 +163,13 @@ uv run aurora_waves_v03.py --duration 130     # slower playback
 
 Rendering imports the drawing code from `aurora_waves_v02.py` instead of copying it, so the still and the moving version cannot drift apart. About a minute for 96 frames on a laptop; the GIF lands around 5 MB.
 
-## Run V04
-
-```sh
-uv run fetch_omni.py            # once; saves the archive week to data/
-uv run aurora_waves_v04.py
-```
-
-This writes `out/aurora-waves-v04-week-in-motion.gif` (161 frames, 17.7 seconds, about 3.6 MB) and the poster frame `out/aurora-waves-v04-poster.png`. The same knobs as V03:
-
-```sh
-uv run aurora_waves_v04.py --window 12        # wider window, calmer motion
-uv run aurora_waves_v04.py --frames 80        # shorter loop, smaller file
-uv run aurora_waves_v04.py --duration 140     # slower playback
-```
-
-V04 imports its drawing from `aurora_waves_v02.py` as well, so the still and both animations share one implementation of the curtain. About ninety seconds for 161 frames on a laptop.
-
 ## Read the week again — one slider for time
 
 ```sh
 uv run aurora_waves_web.py
 ```
 
-No window opens and no picture is drawn. This writes `site/index.html`, and the browser draws that: the whole week across the top, the curtain in the middle, and the six measurements as a strip underneath, all driven by one slider. `site/` is output — it is in `.gitignore` and is never committed, and this script is the thing that rebuilds it.
+This writes `site/index.html` with Plotly included in the file. Once the Python dependencies are installed, generation works offline; open the resulting HTML file in a browser to view it offline too. No window opens automatically. The browser draws the whole week across the top, the curtain in the middle, and the six measurements as a strip underneath, all driven by one slider. `site/` is output — it is in `.gitignore` and is never committed, and this script is the thing that rebuilds it.
 
 The slider is the only control, and one is the point. It moves an eight-hour window across the week, one hour per step, at the same pace as the GIF, and it never zooms. Six sliders, one per measurement, were the obvious alternative and are the wrong one: scrubbing each measurement on its own clock is exactly what makes a picture say six things at once, and this drawing only ever had one clock. Six rows therefore move together, each carrying the name, the unit and what it drives in the picture — the encodings are the table above, written out in words where you can see them against the drawing. The rows use the picture's own rulers, with one exception: temperature climbs from 13,000 K in the quiet stretches to 1,860,000 K in the storm, so that one row is spaced logarithmically, while the point *colour* in the picture stays linear in temperature exactly as V04 draws it.
 
@@ -181,12 +191,12 @@ It is served at **<https://eating-yuting.github.io/Aurora-Waves/>**: `.github/wo
 
 这是单独保存的第二版：`aurora_waves_v02.py` 对应 `aurora-waves-v02-emerald-veil.png`，不会覆盖第一版。新版保留六项数据，把极光绿作为主色，辅以青绿、少量紫色下缘和红色辉光。Bz 改为控制光幕下缘的位置，让主体颜色更接近极光观感。光幕经过 45 分钟柔化，但缺测位置仍留空；光点面积和颜色保留五分钟数据的变化。这里呈现的是数据艺术，不是实拍照片或极光可见性预测。
 
-四个版本各有一个归档文件夹：`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`，里面分别放着那一版的脚本、说明、静帧和动画（GIF），一个文件夹就是那一版的全部内容。**最终版本是第四版（V04）**，使用中的副本在顶层（也就是本页），同一份内容也已归档到 `Aurora-Waves-v4/`。原始数据只保存一份，放在顶层 `data/`，四个版本共用；每张图在顶层 `out/` 里也各有一份副本，本页表格里的链接指向那一份。
+四个版本各有一个归档文件夹：`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`，里面分别放着那一版的脚本、说明、静帧和动画（GIF），一个文件夹就是那一版的全部内容。**最终版本是第四版（V04）**，使用中的副本在顶层（也就是本页），同一份内容也已归档到 `Aurora-Waves-v4/`。原始数据只保存一份，放在顶层 `data/`。正式复现请运行顶层脚本；归档脚本不会自动读取顶层数据，重跑前需把顶层 `data/` 复制到对应归档文件夹内；每张图在顶层 `out/` 里也各有一份副本，本页表格里的链接指向那一份。
 
 想直接看可视化，不用跑任何代码：点开 `out/aurora-waves-v04-week-in-motion.gif` 就是最终版的动画（GitHub 上会直接播放），点开 `out/aurora-waves-v04-poster.png` 是最终版的静帧；其余三版的成品图同样可以直接点开查看（见上文表格里的链接）。
 
 第三版 `aurora_waves_v03.py` 在第二版的基础上加了帧动画：把一天 24 小时的太阳风通过一个 8 小时宽的滑动窗口呈现，让绿色光幕流动起来，山峦保持静止（94 年的 Kp 记录本身没有时间轴）。整个循环 9.6 秒、96 帧、约 5 MB，全部帧共用同一套 128 色调色板，避免颜色闪烁；时间轴下方那条亮绿色的短线，标出当前窗口在一天中的位置。
 
-第四版 `aurora_waves_v04.py` 把时间轴从一天拉长到一周。因为 NOAA 的实时接口只保留 24 小时，这一周的数据改用 NASA 的 OMNI 档案（经由 CDAWeb 的 HAPI 接口抓取一次、原样存入 `data/`），选的是 2024 年 10 月 7–14 日——10 日发生了磁暴，Kp 达 8.7、Bz 低到 −46 nT。窗口仍是 8 小时宽、每小时推进一帧，所以节奏和第三版一致；新增了一条「周条」，把整整七天的光幕高度压缩成一条轮廓，并标出当前窗口的位置和磁暴那天。编码方式与第二版相同，但刻度按这一周的真实分布放宽（否则整场磁暴会被压缩成一种颜色）。两台仪器的缺测时段不同，所以第四版改为「各自在自己有效的分钟内取平均、同一时钟窗口内两者都在场才算有效」，2016 个五分钟窗口里 1921 个可用（95.3%）；剩下的 95 个空窗全部如实留空，不插值补齐——光幕辉光在缺口处渐隐，但边线和光点仍然断开，缺口看得见。
+第四版 `aurora_waves_v04.py` 把时间轴从一天拉长到一周。因为 NOAA 的实时接口只保留 24 小时，这一周的数据改用 NASA 的 OMNI 档案（经由 CDAWeb 的 HAPI 接口抓取一次、原样存入 `data/`），选的是 2024 年 10 月 7–14 日——10 日发生了磁暴，Kp 达 8.7、Bz 低到 −46 nT。窗口仍是 8 小时宽；第三版每帧约推进十分钟，第四版每帧约推进一小时；新增了一条「周条」，把整整七天的光幕高度压缩成一条轮廓，并标出当前窗口的位置和磁暴那天。编码方式与第二版相同，但刻度按这一周的真实分布放宽（否则整场磁暴会被压缩成一种颜色）。两台仪器的缺测时段不同，所以第四版改为「各自在自己有效的分钟内取平均、同一时钟窗口内两者都在场才算有效」，2016 个五分钟窗口里 1921 个可用（95.3%）；剩下的 95 个空窗全部如实留空，不插值补齐——光幕辉光在缺口处渐隐，但边线和光点仍然断开，缺口看得见。
 
 另外还有一个网页版 `aurora_waves_web.py`（写出 `site/index.html`，`site/` 是产物、不入库）。它不是第二张图，而是「把同一周再读一遍」的工具：上面是整周，中间是光幕，下面是把六个维度横向摊开的六行，全部由**一条**时间滑块驱动——8 小时宽的窗口每小时推进一格，和 GIF 同一个节奏。只用一条而不是六条滑块，是因为每个量各按自己的时钟拖动，正是让一张图同时说六件事的做法；一条时钟才能保证六个量看的是**同一刻**。六行各自标着名字、单位和它控制画面里的什么，刻度沿用画面自己的标尺，只有温度那行改成对数间隔（本周从 13,000 K 升到 1,860,000 K，线性轴会把半周压成一条贴底的线；而画面里光点的**颜色**仍然线性对应温度）。有两处如实放弃：山峦不在页面里，因为 94 年的 Kp 没有时钟可拖，第一行改用本周自己的三小时 Kp（它和山峦用的是同一个指数）；光幕改成五层堆叠色带，因为浏览器托不住每个时刻一张 2700 像素的贴图，而色带的透明度无法随时间变化，所以「越暗的极光画得越短」——这是对编码的重新解读，不是照抄。上线地址是 https://eating-yuting.github.io/Aurora-Waves/ ：`.github/workflows/pages.yml` 每次推送都会从 `data/` 重新生成它（就是课程给的 `pages.yml`，只改了那一行 `uv run aurora_waves_web.py`）。GIF 才是那张图，这个页面只是能让你停在其中某一刻。

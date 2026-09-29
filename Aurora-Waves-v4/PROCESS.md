@@ -71,3 +71,13 @@ Two things were rejected. Six sliders, one per measurement, would let each be sc
 Two faults were found by rendering the page and looking at it, which was the only way either could have been found. Plotly thins its own slider step labels once there are enough steps, so seven day labels that were present in the generated HTML never painted; the page now draws its own time ruler, in the same coordinates the slider handle travels along. And the annotation meant to caption a panel produced no visible text at all, because `add_annotation(row=3)` resolves to that row's *axis* rather than to its panel — so `x = −.007` meant seven thousandths of a second before 1970, and the caption was drawn there. The axes have to be named explicitly.
 
 中文：把成品拿给没做过这张图的人看了一遍之后，改了两件事，都是修正而不是新增。一是**字号**——海报 2700 像素宽，挂在 README 里只有约 880 像素，原尺寸下 6 pt 的注记缩到约 4 像素，读不出来。修法不是重排版面，而是发现字号、线宽、点径都是按「点」计量的，也就是相对图幅而不是相对像素：画布从 18×12 英寸改成 11.25×7.5，所有 dpi 同比例乘 1.6（帧 60→96、海报 150→240），两张图仍是原来的像素尺寸（1080×720 与 2700×1800），而所有以点计量的元素相对图幅放大了 1.6 倍，构图没有移动。二是**只有一条滑块的网页**：`aurora_waves_web.py` 写出 `site/index.html`，用一条时间滑块把同一周重新读一遍，可以停在某一刻读那六个数字；数据、平滑、几何与配色全部从 `aurora_waves_v04.py`、`aurora_waves_v02.py` 导入，所以网页不会和海报走散。拒绝了「六个维度各一条滑块」——每个量按自己的时钟拖动，正是让一张图同时说六件事的做法；也拒绝了山峦，因为 94 年的 Kp 没有时钟可拖，改用本周自己的三小时 Kp 放在最上一行。光幕改成五层堆叠色带（浏览器托不住每个时刻一张 2700 像素的贴图），色带的透明度无法随时间变化，所以「越暗的极光画得越短」，这是对编码的重新解读，不是照抄。另外两处只有渲染出来才会发现的毛病：Plotly 在步数多时会自动抽稀滑块自身的标签，HTML 里明明有七个日标签却没有画出来，于是页面自己画了一把时间尺；以及 `add_annotation(row=3)` 解析到的是那一行的**坐标轴**而不是面板，`x=−.007` 变成了 1970 年之前，注解一个字都看不见，必须显式指定坐标轴。
+
+## Submission review — 29 September 2026
+
+Codex corrected the archive data-path instructions and the V03/V04 timing comparison, and moved the final V04 run command ahead of the version history. The web exporter now embeds Plotly instead of loading it from a CDN, so the generated HTML can be opened offline. The same exporter change was applied to the V04 archive. Existing data, images and animation code were retained.
+
+中文：本次检查修正了归档数据路径和 V03／V04 推进速度的说明，并把最终 V04 的运行入口移到版本介绍前。网页现在内含 Plotly，不再依赖在线加载；V04 归档中的网页脚本同步修改。原始数据、作品图和动画代码保留。
+
+Offline interaction testing also exposed an existing axis-target error: slider frames changed the whole-week overview instead of the curtain. The frame now updates the curtain axis and the six measurement axes together, while leaving the overview fixed.
+
+离线交互测试还发现原有的时间轴对应错误：滑块误改了整周概览，光幕却未同步。现已改为同时更新光幕与六行数据的时间范围，整周概览保持固定。
