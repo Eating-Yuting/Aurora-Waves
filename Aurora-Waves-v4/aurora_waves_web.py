@@ -376,7 +376,7 @@ def build(window_hours=WINDOW_HOURS, step_hours=STEP_HOURS):
         middle = min(max(opened_dt + (closed_dt - opened_dt) / 2,
                          stamp[0] + timedelta(hours=15)),
                      stamp[-1] - timedelta(hours=15))
-        frame_layout = {('xaxis' if row == CURTAIN_ROW else f'xaxis{row}'): dict(range=[opened_dt, closed_dt])
+        frame_layout = {f'xaxis{row}': dict(range=[opened_dt, closed_dt])
                         for row in range(CURTAIN_ROW, ROWS + 1)}
         frames.append(go.Frame(
             name=str(i),
@@ -553,7 +553,7 @@ def main():
     figure, stats = build(args.window, args.step)
     if not SITE.exists():
         SITE.mkdir(parents=True)
-    figure.write_html(PAGE, include_plotlyjs='cdn', auto_open=False,
+    figure.write_html(PAGE, include_plotlyjs=True, auto_open=False,
                       config={'displaylogo': False, 'responsive': True})
     # Plotly's write_html emits no <title>, so the tab would show the file's URL.
     # Give it the page's own name, in the same words the README calls it by.

@@ -4,9 +4,9 @@
 >
 > **归档说明**：这是**第三版**的只读快照。**最终版本是第四版（V04）**，在[仓库顶层](../README.md)，也已归档到 `Aurora-Waves-v4/`。原始数据不在这里重复存放，统一放在顶层 `data/`。
 
-![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](../out/aurora-waves-v03-emerald-veil-in-motion.gif)
+![Emerald Veil in motion: the same day of solar wind drawn through a sliding eight-hour window](out/aurora-waves-v03-emerald-veil-in-motion.gif)
 
-The image above is the first version that moves. It plays straight from this page. The animation itself is kept once, at the [repository top level](../out/), so this folder carries the still rather than a second copy of a 5 MB file — two copies of a GIF are two files that can disagree.
+The image above is the first version that moves. It plays straight from this page. Both the animation and the still are kept in this folder's `out/`. Identical copies are also kept at the [repository top level](../out/), where the main README links to them.
 
 ## What V03 does
 

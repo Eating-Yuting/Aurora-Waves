@@ -10,7 +10,7 @@ The image above is the final visualisation, and it plays straight from this page
 
 ## What V04 does
 
-V04 keeps V03's idea — a window sliding across the record — and widens the record from one day to seven. It draws 7–14 October 2024 UTC from NASA's OMNI archive [1]: the week of the geomagnetic storm of 10 October, when Kp reached 8.7 and Bz fell to −46 nT. The window is still eight hours wide and still advances one hour per frame, so the pace of the two animations matches even though the clock does not. 161 frames, 17.7 seconds.
+V04 keeps V03's idea — a window sliding across the record — and widens the record from one day to seven. It draws 7–14 October 2024 UTC from NASA's OMNI archive [1]: the week of the geomagnetic storm of 10 October, when Kp reached 8.7 and Bz fell to −46 nT. Both versions use an eight-hour window. V03 advances approximately ten minutes of observations per frame; V04 advances approximately one hour per frame. 161 frames, 17.7 seconds.
 
 Three things are new over V03:
 
@@ -51,7 +51,7 @@ uv run aurora_waves_web.py                 # writes site/index.html — open it 
 
 ## 中文说明
 
-**这是最终版本（V04）**。它把时间轴从一天拉长到一周：因为 NOAA 的实时接口只保留 24 小时，这一周的数据改用 NASA 的 OMNI 档案（经由 CDAWeb 的 HAPI 接口抓取一次、原样存入 `data/`），选的是 2024 年 10 月 7–14 日——10 日发生了磁暴，Kp 达 8.7、Bz 低到 −46 nT。窗口仍是 8 小时宽、每小时推进一帧，所以节奏和第三版一致；新增了一条「周条」，把整整七天的光幕高度压缩成一条轮廓，并标出当前窗口的位置和磁暴那天。
+**这是最终版本（V04）**。它把时间轴从一天拉长到一周：因为 NOAA 的实时接口只保留 24 小时，这一周的数据改用 NASA 的 OMNI 档案（经由 CDAWeb 的 HAPI 接口抓取一次、原样存入 `data/`），选的是 2024 年 10 月 7–14 日——10 日发生了磁暴，Kp 达 8.7、Bz 低到 −46 nT。窗口仍是 8 小时宽；第三版每帧约推进十分钟，第四版每帧约推进一小时；新增了一条「周条」，把整整七天的光幕高度压缩成一条轮廓，并标出当前窗口的位置和磁暴那天。
 
 编码方式与第二版相同，但刻度按这一周的真实分布放宽（否则整场磁暴会被压缩成一种颜色）。两台仪器的缺测时段不同，所以第四版改为「各自在自己有效的分钟内取平均、同一时钟窗口内两者都在场才算有效」，2016 个五分钟窗口里 1921 个可用（95.3%）；剩下的 95 个空窗全部如实留空，不插值补齐——光幕辉光在缺口处渐隐，但边线和光点仍然断开，缺口看得见。
 

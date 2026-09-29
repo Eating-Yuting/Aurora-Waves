@@ -76,7 +76,7 @@ Two faults were found by rendering the page and looking at it, which was the onl
 
 This repository is a single submission, but it carries four versions of the picture, so each one has its own folder — `Aurora-Waves-v1/` to `Aurora-Waves-v4/` — holding that version's scripts, its README, its still and its animation as they stood at the time. Two reasons. A version can be read and seen without checking out an old commit, and the order of decisions stays visible in one place: v1 the first landscape, v2 the quieter palette and the re-encoded Bz, v3 a day in motion, v4 the week — which is both the correction of v3 and the version submitted.
 
-The only thing kept in one place is the raw data: it lives once in `data/`, and all four read it from there, which is why each archive README says to copy it in before re-running a script. Everything else is copied rather than linked, so that a folder is self-contained — open it and you have the whole version. Each picture therefore exists twice: once inside the folder that produced it, and once at the top level in `out/`, which is where the main README's links point. The pairs are written by the same run and are byte-identical; the duplication costs about 9 MB and buys the reader not having to follow a link out of a folder to see what it is about.
+The only thing kept in one place is the raw data: it lives once in the top-level `data/`. Top-level scripts read it directly; archive scripts require a copy inside their own folder before they can run. Scripts, documentation and pictures are copied rather than linked, so each archive can be browsed on its own. Re-running it also requires the data copy described above. Each picture therefore exists twice: once inside the folder that produced it, and once at the top level in `out/`, which is where the main README's links point. The pairs are written by the same run and are byte-identical; the duplication costs about 9 MB and buys the reader not having to follow a link out of a folder to see what it is about.
 
 One exception, recorded because it is one. `Aurora-Waves-v4/` was re-synced after the type-size revision above, so that the folder claiming to be the submitted version holds the submitted version — same script, same two pictures, byte for byte. The other three folders hold what they held. Their pictures are drawn at the older type size, which is why V03's lettering is visibly smaller than V04's at the same displayed width; that is the honest thing for a frozen stage to show, and it is the clearest way to see what the revision changed.
 
@@ -84,9 +84,19 @@ The archive folders therefore add files the brief does not ask for, which is why
 
 中文：仓库是同一个提交，但里面装了四个版本，所以每一版都有自己的文件夹（`Aurora-Waves-v1/` 到 `Aurora-Waves-v4/`），放着那一版当时的脚本、说明、静帧和动画。这样不用翻旧提交就能读代码、也能直接看到成品，而且能一眼看出决策的顺序：第一版是最早的风景画，第二版换了更安静的配色并改掉 Bz 的编码方式，第三版让一天动起来，第四版回到一周——第四版既是对第三版的纠正，也是最终提交的版本。
 
-只有原始数据是单份的：它只存在顶层 `data/`，四个版本都从那里读，所以每个归档 README 都写了「重跑脚本前先把 `data/` 拷进来」。其余文件是复制而不是链接，这样每个文件夹自带全部内容：每一版文件夹里 `out/` 放的是那一版自己的成品图，顶层 `out/` 里另有一份完全相同的副本（主 README 的链接指向顶层那一份）。两份由同一次运行产出、逐字节一致；重复大约多占 9 MB，换来的是打开一个文件夹就等于打开一个完整版本。
+只有原始数据是单份的：它只存在顶层 `data/`，顶层脚本可以直接读取；归档脚本需要先把这份 `data/` 复制进对应归档文件夹才能运行。脚本、说明和作品文件是复制而不是链接，可以直接浏览；重跑时仍需上述数据副本：每一版文件夹里 `out/` 放的是那一版自己的成品图，顶层 `out/` 里另有一份完全相同的副本（主 README 的链接指向顶层那一份）。两份由同一次运行产出、逐字节一致；重复大约多占 9 MB，换来的是打开一个文件夹就等于打开一个完整版本。
 
 有一个例外，写在这里因为它是例外：`Aurora-Waves-v4/` 在改字号之后重新同步过一次，好让「装着最终版本的那个文件夹」里真的就是最终版本——同一个脚本、同样两张图，逐字节一致。另外三个文件夹保持原样，它们的图仍是旧字号画的，所以同一显示宽度下第三版的字明显比第四版小；对一份冻结的阶段记录来说，这才是诚实的呈现，也是看清这次改了什么的最直接方式。
 
 归档文件夹因此比作业要求多出一些文件，课程检查脚本那句 `note`（"15 file(s) beyond the ones the brief asks for"）说的就是它们——那是 `note` 不是 `fail`，只有 `FAIL` 才会让 GitHub 变红叉，而这次运行是绿的。这 15 个是四份归档 README、四份归档的本文档副本、以及归档文件夹里的七张图；脚本不计入（检查脚本放行所有 `.py`），但脚本本来就在里面，那才是归档的意义。多出来的正是「过程分」要看的证据。
 
+
+## Submission review — 29 September 2026
+
+Codex corrected the archive data-path instructions and the V03/V04 timing comparison, and moved the final V04 run command ahead of the version history. The web exporter now embeds Plotly instead of loading it from a CDN, so the generated HTML can be opened offline. The same exporter change was applied to the V04 archive. Existing data, images and animation code were retained.
+
+中文：本次检查修正了归档数据路径和 V03／V04 推进速度的说明，并把最终 V04 的运行入口移到版本介绍前。网页现在内含 Plotly，不再依赖在线加载；V04 归档中的网页脚本同步修改。原始数据、作品图和动画代码保留。
+
+Offline interaction testing also exposed an existing axis-target error: slider frames changed the whole-week overview instead of the curtain. The frame now updates the curtain axis and the six measurement axes together, while leaving the overview fixed.
+
+离线交互测试还发现原有的时间轴对应错误：滑块误改了整周概览，光幕却未同步。现已改为同时更新光幕与六行数据的时间范围，整周概览保持固定。
