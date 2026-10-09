@@ -1,5 +1,7 @@
 # Aurora Waves
 
+By Lily-eating.
+
 **The final version is V04.** It draws one week of measured solar wind — 7–14 October 2024, the week of the geomagnetic storm of 10 October — through a window eight hours wide that slides across it.
 
 - **[See it move →](out/aurora-waves-v04-week-in-motion.gif)** — the final visualisation. 161 frames, 17.7 seconds, loops. The link opens the file itself, so it plays full size.

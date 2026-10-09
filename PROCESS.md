@@ -1,5 +1,7 @@
 # Process
 
+By Lily-eating.
+
 ## Tools and decisions
 
 I chose aurora as the subject and supplied three visual references. I wanted colour and more than five data dimensions. I used AI assistance for the Python scripts and asked Codex to continue the existing `Aurora-Waves` repository after its first landscape version. Codex selected the third reference for its blue-green mountains and luminous points, then revised the plotting code and drafted this documentation. Most of the revised code was written by AI. The final image is drawn by Matplotlib from the saved data, without an AI-generated image layer.
