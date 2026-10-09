@@ -1,6 +1,6 @@
 # Aurora Waves
 
-By Lily-eating.
+By Eating-Yuting.
 
 **The final version is V04.** It draws one week of measured solar wind — 7–14 October 2024, the week of the geomagnetic storm of 10 October — through a window eight hours wide that slides across it.
 
